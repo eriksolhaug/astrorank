@@ -186,7 +186,17 @@ class AstrorankGUI(QMainWindow):
         self.image_info_label.setTextFormat(Qt.RichText)
         self.image_info_label.setMaximumHeight(30)
         
-        # Image container - wraps image display (without info label)
+        # WISE download progress bar and message (shown below both single and dual views)
+        self.wise_progress_bar = QProgressBar()
+        self.wise_progress_bar.setVisible(False)
+        self.wise_progress_bar.setMaximumHeight(20)
+        
+        self.wise_message_label = QLabel()
+        self.wise_message_label.setVisible(False)
+        self.wise_message_label.setAlignment(Qt.AlignCenter)
+        self.wise_message_label.setMaximumHeight(25)
+        
+        # Image container - wraps image display (without info label or progress bar)
         image_container = QWidget()
         image_container_layout = QVBoxLayout()
         image_container_layout.setContentsMargins(0, 0, 0, 0)
@@ -197,18 +207,6 @@ class AstrorankGUI(QMainWindow):
         self.image_label.setStyleSheet("border: 1px solid black;")
         self.image_label.setAlignment(Qt.AlignCenter)
         image_container_layout.addWidget(self.image_label)
-        
-        # WISE download progress bar and message
-        self.wise_progress_bar = QProgressBar()
-        self.wise_progress_bar.setVisible(False)
-        self.wise_progress_bar.setMaximumHeight(20)
-        image_container_layout.addWidget(self.wise_progress_bar)
-        
-        self.wise_message_label = QLabel()
-        self.wise_message_label.setVisible(False)
-        self.wise_message_label.setAlignment(Qt.AlignCenter)
-        self.wise_message_label.setMaximumHeight(25)
-        image_container_layout.addWidget(self.wise_message_label)
         
         image_container.setLayout(image_container_layout)
         image_container.setMinimumHeight(400)
@@ -288,13 +286,15 @@ class AstrorankGUI(QMainWindow):
         zoom_layout.addStretch()
         image_wrapper.addLayout(zoom_layout)
         
-        # Create a container layout that includes the info label and the image containers
-        # This ensures the info label stays visible when switching between single and dual view
+        # Create a container layout that includes the info label, image containers, and progress bar
+        # This ensures the info label and progress bar stay visible when switching between single and dual view
         images_layout = QVBoxLayout()
         images_layout.setContentsMargins(0, 0, 0, 0)
         images_layout.setSpacing(0)
         images_layout.addWidget(self.image_info_label)
         images_layout.addLayout(image_wrapper)
+        images_layout.addWidget(self.wise_progress_bar)
+        images_layout.addWidget(self.wise_message_label)
         
         left_layout.addLayout(images_layout, 0)
         
@@ -399,9 +399,9 @@ class AstrorankGUI(QMainWindow):
         
         if current_file in self.rankings:
             rank = self.rankings[current_file]
-            self.image_info_label.setText(f"<table style='width: auto;'><tr><td style='padding: 0 10px 0 0;'>{current_file}</td><td align='right'>(Rank: {rank}) [{current_index_display}/{total_images}]</td></tr></table>")
+            self.image_info_label.setText(f"<table style='width: 100%;'><tr><td style='padding-right: 10px;'>{current_file}</td><td style='width: 100%;'></td><td align='right'>(Rank: {rank}) [{current_index_display}/{total_images}]</td></tr></table>")
         else:
-            self.image_info_label.setText(f"<table style='width: auto;'><tr><td style='padding: 0 10px 0 0;'>{current_file}</td><td align='right'>[{current_index_display}/{total_images}]</td></tr></table>")
+            self.image_info_label.setText(f"<table style='width: 100%;'><tr><td style='padding-right: 10px;'>{current_file}</td><td style='width: 100%;'></td><td align='right'>[{current_index_display}/{total_images}]</td></tr></table>")
         
         # Update window title
         self.setWindowTitle(f"imrank - {current_file}")
