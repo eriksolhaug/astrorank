@@ -21,11 +21,7 @@ def get_astrorank_icon():
     for logo_path in possible_paths:
         resolved_path = logo_path.resolve()
         if resolved_path.exists():
-            print(f"✓ Icon loaded from: {resolved_path}")
             return QIcon(str(resolved_path))
     
     # If logo not found, return empty icon
-    print("⚠ Logo not found at any of these paths:")
-    for logo_path in possible_paths:
-        print(f"  - {logo_path.resolve()}")
     return QIcon()

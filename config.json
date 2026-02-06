@@ -18,7 +18,7 @@
     "clear_rank": "c",
     "fit_image": "f",
     "reset_container": "r",
-    "toggle_helper": "?",
+    "toggle_helper": "shift+?",
     "toggle_list": "l",
     "toggle_dark_mode": "d",
     "comment": "k",
