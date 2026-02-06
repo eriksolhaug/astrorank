@@ -14,7 +14,7 @@ setup(
     url="https://github.com/eriksolhaug/astrorank",
     packages=find_packages(),
     package_data={
-        "astrorank": ["../logo/*.png"],
+        "astrorank": ["../logo/*.png", "../config.json"],
     },
     include_package_data=True,
     classifiers=[
