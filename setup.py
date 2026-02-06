@@ -4,13 +4,13 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
-    name="imrank",
+    name="astrorank",
     version="0.1.0",
     author="Erik Solhaug",
     description="A GUI application for ranking astronomical images",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/eriksolhaug/imrank",
+    url="https://github.com/eriksolhaug/astrorank",
     packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -24,7 +24,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "imrank=imrank.imrank:main",
+            "astrorank=astrorank.astrorank:main",
         ],
     },
 )
