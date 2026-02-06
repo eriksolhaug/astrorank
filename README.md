@@ -79,12 +79,12 @@ AstroRank uses a `config.json` file to customize keyboard shortcuts, ranking sca
 
 ### Configuring the Survey URL
 
-To use a different astronomical survey for the dual-panel view (press **G** to toggle), edit the `url_template` in the `wise_download` section:
+To use a different astronomical survey for the dual-panel view (press **G** to toggle), edit the `url_template` and `name` in the `secondary_download` section:
 
 ```json
-"wise_download": {
+"secondary_download": {
   "enabled": true,
-  "output_directory": "wise",
+  "name": "WISE",
   "url_template": "https://www.legacysurvey.org/viewer/decals-unwise-neo11/{ra}/{dec}?layer=unwise-neo1&zoom=15"
 }
 ```
@@ -92,19 +92,20 @@ To use a different astronomical survey for the dual-panel view (press **G** to t
 **Key parameters:**
 - `{ra}` and `{dec}` are automatically replaced with coordinates parsed from your image filenames
 - `zoom=15` controls the zoom level in the viewer (adjust as needed; higher values = more zoom)
+- `name` is used for UI labels and output directory naming
 - Works on Windows, macOS, and Linux
 
-**Note on Band/Extension Configuration:**
-The default configuration uses the WISE unwise-neo11 survey, which provides 2 bands:
-- **W1 band** → Blue channel
-- **W2 band** → Green and Red channels
+**Configuring FITS Extensions for Different Surveys:**
+Different surveys provide FITS files with different band/extension structures. The current implementation assumes a 3D FITS array where:
+- Layer 0 → Blue channel
+- Layer 1 → Green and Red channels
 
-If you configure a different survey with different FITS extensions or band structure, the current implementation extracts layer 1 from the downloaded FITS file. For surveys with different extension layouts or more bands, you may need to:
-1. Check the survey's FITS file structure (number of extensions, which bands correspond to which extensions)
-2. Understand which extensions/bands map to RGB channels for your specific survey
-3. Modify the image processing code in `astrorank/utils.py` (specifically the `download_wise_image()` function) to handle the different band mapping
+For a custom survey, you need to:
+1. Check the survey's documentation for FITS file structure (number of extensions, which bands they contain)
+2. Update `astrorank/utils.py` in the `download_secondary_image()` function to extract the correct layers for your survey's FITS format
+3. Map the extracted data to RGB channels appropriately
 
-This flexibility allows you to integrate virtually any multi-band astronomical survey, though custom band assignments may require code modifications.
+Example: If your survey has a single 2D FITS extension instead of a 3D array, you'd modify the layer extraction logic accordingly.
 
 ### Custom Ranking Scale
 
@@ -131,7 +132,7 @@ Example for 1-5 scale:
 }
 ```
 
-You can also assign any key to a rank value:
+You can also assign any key to a rank value. The rank value doesn't have to be the same as the key:
 ```json
 "ranks": {
   "p": 1,
@@ -141,6 +142,18 @@ You can also assign any key to a rank value:
   "b": 5
 }
 ```
+
+Or use the keys as the rank values themselves:
+```json
+"ranks": {
+  "a": "a",
+  "b": "b",
+  "c": "c",
+  "d": "d"
+}
+```
+
+**Important:** Ensure rank keys do not overlap with any other key functionalities defined in the `keys` section (e.g., don't use 'q' as a rank if 'q' is your quit key). It is the user's responsibility to avoid these conflicts.
 
 The UI will automatically update to show "Rank (min-max):" based on your configured values.
 
