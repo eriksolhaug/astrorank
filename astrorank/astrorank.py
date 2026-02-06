@@ -177,13 +177,7 @@ class AstrorankGUI(QMainWindow):
         left_layout.setContentsMargins(0, 0, 0, 0)
         left_layout.setSpacing(2)
         
-        # Image container - wraps filename label and image together
-        image_container = QWidget()
-        image_container_layout = QVBoxLayout()
-        image_container_layout.setContentsMargins(0, 0, 0, 0)
-        image_container_layout.setSpacing(0)
-        
-        # Image filename and ranking info
+        # Image filename and ranking info (shown above both single and dual views)
         self.image_info_label = QLabel()
         info_font = QFont()
         info_font.setPointSize(int(info_font.pointSize() * 1.5))
@@ -191,7 +185,12 @@ class AstrorankGUI(QMainWindow):
         self.image_info_label.setAlignment(Qt.AlignLeft)
         self.image_info_label.setTextFormat(Qt.RichText)
         self.image_info_label.setMaximumHeight(30)
-        image_container_layout.addWidget(self.image_info_label)
+        
+        # Image container - wraps image display (without info label)
+        image_container = QWidget()
+        image_container_layout = QVBoxLayout()
+        image_container_layout.setContentsMargins(0, 0, 0, 0)
+        image_container_layout.setSpacing(0)
         
         # Image display
         self.image_label = QLabel()
@@ -289,7 +288,15 @@ class AstrorankGUI(QMainWindow):
         zoom_layout.addStretch()
         image_wrapper.addLayout(zoom_layout)
         
-        left_layout.addLayout(image_wrapper, 0)
+        # Create a container layout that includes the info label and the image containers
+        # This ensures the info label stays visible when switching between single and dual view
+        images_layout = QVBoxLayout()
+        images_layout.setContentsMargins(0, 0, 0, 0)
+        images_layout.setSpacing(0)
+        images_layout.addWidget(self.image_info_label)
+        images_layout.addLayout(image_wrapper)
+        
+        left_layout.addLayout(images_layout, 0)
         
         # Ranking input and buttons
         control_layout = QHBoxLayout()
@@ -440,6 +447,11 @@ class AstrorankGUI(QMainWindow):
                 self.dual_view_container.setVisible(False)
             self.display_wise_view()
         else:
+            # Set dual-view mode so it will display once download completes
+            self.dual_view_active = True
+            self.dual_view_zoom = 1.0
+            self.image_container.setVisible(False)
+            self.dual_view_container.setVisible(True)
             # Try to download the WISE image
             self.download_wise_for_current()
     
