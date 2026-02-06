@@ -44,32 +44,6 @@
    astrorank </path/to/images/directory>
    ```
 
-### macOS App Bundle (Optional)
-
-To create a proper macOS app bundle with the app icon showing in the dock:
-
-1. **Install py2app:**
-
-   ```bash
-   conda activate astrorank
-   pip install py2app
-   ```
-
-2. **Build the app bundle:**
-
-   ```bash
-   cd ~/Research/Tools/astrorank
-   python setup_mac.py py2app
-   ```
-
-3. **Run the app:**
-
-   ```bash
-   open dist/astrorank.app
-   ```
-
-The app bundle will be created in `dist/astrorank.app` with the custom icon showing in the macOS dock.
-
 ---
 
 ## How to Use AstroRank?
