@@ -94,6 +94,18 @@ To use a different astronomical survey for the dual-panel view (press **G** to t
 - `zoom=15` controls the zoom level in the viewer (adjust as needed; higher values = more zoom)
 - Works on Windows, macOS, and Linux
 
+**Note on Band/Extension Configuration:**
+The default configuration uses the WISE unwise-neo11 survey, which provides 2 bands:
+- **W1 band** → Blue channel
+- **W2 band** → Green and Red channels
+
+If you configure a different survey with different FITS extensions or band structure, the current implementation extracts layer 1 from the downloaded FITS file. For surveys with different extension layouts or more bands, you may need to:
+1. Check the survey's FITS file structure (number of extensions, which bands correspond to which extensions)
+2. Understand which extensions/bands map to RGB channels for your specific survey
+3. Modify the image processing code in `astrorank/utils.py` (specifically the `download_wise_image()` function) to handle the different band mapping
+
+This flexibility allows you to integrate virtually any multi-band astronomical survey, though custom band assignments may require code modifications.
+
 ### Custom Ranking Scale
 
 By default, AstroRank uses ranks 0-3. To use a different scale (e.g., 1-5, 0-6, or custom values), modify the `ranks` section:
