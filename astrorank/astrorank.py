@@ -50,6 +50,23 @@ class WiseDownloadWorker(QThread):
             self.error.emit(f"Download error: {str(e)}")
 
 
+class NavigationAwareLineEdit(QLineEdit):
+    """QLineEdit that forwards arrow keys and other navigation keys to parent window"""
+    
+    def keyPressEvent(self, event):
+        """Override keyPressEvent to forward navigation keys to parent"""
+        key = event.key()
+        # Forward navigation keys to parent window
+        if key in [Qt.Key_Left, Qt.Key_Right, Qt.Key_Up, Qt.Key_Down, Qt.Key_Return, Qt.Key_Enter]:
+            # Find the main window (AstrorankGUI)
+            window = self.window()
+            if window and hasattr(window, 'keyPressEvent'):
+                window.keyPressEvent(event)
+                return
+        # Handle other keys normally in the text edit
+        super().keyPressEvent(event)
+
+
 class CommentDialog(QDialog):
     """Dialog for adding/editing image comments"""
     def __init__(self, parent=None, initial_text=""):
@@ -323,7 +340,7 @@ class AstrorankGUI(QMainWindow):
         rank_label.setFont(large_font)
         control_layout.addWidget(rank_label)
         
-        self.rank_input = QLineEdit()
+        self.rank_input = NavigationAwareLineEdit()
         self.rank_input.setMaximumWidth(120)
         self.rank_input.setMinimumHeight(40)
         self.rank_input.setFont(large_font)
@@ -1039,7 +1056,7 @@ class AstrorankGUI(QMainWindow):
     def _key_matches_action(self, event, action_name):
         """Check if keyboard event matches a configured action"""
         key = event.key()
-        has_shift = event.modifiers() & Qt.ShiftModifier
+        has_shift = bool(event.modifiers() & Qt.ShiftModifier)  # Convert to boolean
         key_strings = self.keys.get(action_name, [])
         
         for key_str in key_strings:
