@@ -19,8 +19,8 @@ from PyQt5.QtCore import Qt, QSize, QTimer, QThread, pyqtSignal
 from astrorank.utils import (
     get_jpg_files, load_rankings, save_rankings,
     find_next_unranked, find_first_unranked, is_valid_rank,
-    parse_radec_from_filename, load_config, download_wise_image,
-    parse_key_string, string_to_qt_key
+    parse_radec_from_filename, load_config, download_secondary_image,
+    parse_key_string, string_to_qt_key, parse_rank_config, get_rank_range
 )
 from astrorank.ui_utils import get_astrorank_icon
 
@@ -41,11 +41,11 @@ class WiseDownloadWorker(QThread):
     def run(self):
         """Run the download in a separate thread"""
         try:
-            result = download_wise_image(self.ra, self.dec, self.output_dir, self.config)
+            result = download_secondary_image(self.ra, self.dec, self.output_dir, self.config)
             if result:
                 self.finished.emit(result)
             else:
-                self.error.emit("Failed to download WISE image")
+                self.error.emit("Failed to download secondary image")
         except Exception as e:
             self.error.emit(f"Download error: {str(e)}")
 
@@ -108,17 +108,24 @@ class AstrorankGUI(QMainWindow):
         self.original_container_width = 680  # Original container width for reset
         self.original_container_height = 680  # Original container height for reset
         
-        # WISE download functionality
+        # Secondary image download functionality (configurable survey)
         self.config = load_config()
-        self.wise_enabled = self.config.get("wise_download", {}).get("enabled", True)
-        self.wise_output_dir = Path(image_dir) / self.config.get("wise_download", {}).get("output_directory", "wise")
-        self.wise_images = {}  # Maps filename to path of downloaded WISE image
-        self.dual_view_active = False  # Track if we're showing original + WISE side-by-side
+        secondary_config = self.config.get("secondary_download", {})
+        self.secondary_enabled = secondary_config.get("enabled", True)
+        self.secondary_name = secondary_config.get("name", "Secondary")
+        self.secondary_output_dir = Path(image_dir) / self.secondary_name.lower()
+        self.secondary_images = {}  # Maps filename to path of downloaded secondary image
+        self.dual_view_active = False  # Track if we're showing original + secondary image side-by-side
         self.download_worker = None  # Reference to download thread
         
         # Load configurable keyboard shortcuts
         self.key_config = self.config.get("keys", {})
         self._initialize_key_bindings()
+        
+        # Load configurable ranks
+        rank_config = self.config.get("ranks", {"0": 0, "1": 1, "2": 2, "3": 3, "backtick": 0})
+        self.rank_map = parse_rank_config(rank_config)  # Maps Qt key enums to rank values
+        self.min_rank, self.max_rank = get_rank_range(rank_config)  # Get valid range
         
         # Load image files and rankings
         self.jpg_files = get_jpg_files(str(self.image_dir))
@@ -311,7 +318,8 @@ class AstrorankGUI(QMainWindow):
         large_font = QFont()
         large_font.setPointSize(int(large_font.pointSize() * 1.5))
         
-        rank_label = QLabel("Rank (0-3):")
+        # Create rank label with dynamic range
+        rank_label = QLabel(f"Rank ({self.min_rank}-{self.max_rank}):")
         rank_label.setFont(large_font)
         control_layout.addWidget(rank_label)
         
@@ -350,13 +358,14 @@ class AstrorankGUI(QMainWindow):
         
         self.table = QTableWidget()
         self.table.setColumnCount(5)
-        self.table.setHorizontalHeaderLabels(["Filename", "Rank", "Ranked?", "Comments", "WISE?"])
+        secondary_header = f"{self.secondary_name}?" if self.secondary_enabled else "Secondary?"
+        self.table.setHorizontalHeaderLabels(["Filename", "Rank", "Ranked?", "Comments", secondary_header])
         # Set all columns resizable independently
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Interactive)  # Filename resizable
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Interactive)  # Rank resizable
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Interactive)  # Ranked? resizable
         self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Interactive)  # Comments resizable
-        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.Interactive)  # WISE? resizable
+        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.Interactive)  # Secondary image status resizable
         # Set default column widths
         self.table.setColumnWidth(0, 200)  # Filename column
         self.table.setColumnWidth(1, 45)   # Rank column
@@ -396,7 +405,7 @@ class AstrorankGUI(QMainWindow):
         image_path = self.image_dir / current_file
         
         # Use the new display method that handles both single and dual view
-        self.display_wise_view()
+        self.display_secondary_view()
         
         # Update image info label with filename and previous ranking
         current_index_display = self.current_index + 1
@@ -464,11 +473,11 @@ class AstrorankGUI(QMainWindow):
         webbrowser.open(viewer_url)
     
     def toggle_wise_view(self):
-        """Toggle between downloading WISE image or showing dual view"""
+        """Toggle between downloading secondary image or showing dual view"""
         current_file = self.jpg_files[self.current_index]
         
-        # If we already have downloaded the WISE image, toggle visibility
-        if current_file in self.wise_images:
+        # If we already have downloaded the secondary image, toggle visibility
+        if current_file in self.secondary_images:
             self.dual_view_active = not self.dual_view_active
             # Reset dual-view zoom when toggling on
             if self.dual_view_active:
@@ -480,7 +489,7 @@ class AstrorankGUI(QMainWindow):
                 # Show single image container, hide dual-view
                 self.image_container.setVisible(True)
                 self.dual_view_container.setVisible(False)
-            self.display_wise_view()
+            self.display_secondary_view()
         else:
             # Set dual-view mode so it will display once download completes
             self.dual_view_active = True
@@ -488,10 +497,10 @@ class AstrorankGUI(QMainWindow):
             self.image_container.setVisible(False)
             self.dual_view_container.setVisible(True)
             # Try to download the WISE image
-            self.download_wise_for_current()
+            self.download_secondary_for_current()
     
-    def download_wise_for_current(self):
-        """Download WISE image for current image's RA/Dec"""
+    def download_secondary_for_current(self):
+        """Download secondary image for current image's RA/Dec"""
         current_file = self.jpg_files[self.current_index]
         radec = parse_radec_from_filename(current_file)
         
@@ -506,45 +515,45 @@ class AstrorankGUI(QMainWindow):
         self.wise_progress_bar.setValue(0)
         
         # Create and start download worker thread
-        self.download_worker = WiseDownloadWorker(ra, dec, str(self.wise_output_dir), self.config)
-        self.download_worker.finished.connect(self.on_wise_download_success)
-        self.download_worker.error.connect(self.show_wise_error)
+        self.download_worker = WiseDownloadWorker(ra, dec, str(self.secondary_output_dir), self.config)
+        self.download_worker.finished.connect(self.on_secondary_download_success)
+        self.download_worker.error.connect(self.show_secondary_error)
         self.download_worker.start()
     
-    def on_wise_download_success(self, image_path):
-        """Handle successful WISE image download"""
+    def on_secondary_download_success(self, image_path):
+        """Handle successful secondary image download"""
         current_file = self.jpg_files[self.current_index]
-        self.wise_images[current_file] = image_path
+        self.secondary_images[current_file] = image_path
         
         # Hide progress bar and show success message
         self.wise_progress_bar.setVisible(False)
         self.wise_message_label.setVisible(True)
         self.wise_message_label.setStyleSheet("color: green; font-weight: bold;")
-        self.wise_message_label.setText("✓ WISE")
+        self.wise_message_label.setText(f"✓ {self.secondary_name}")
         
         # Show dual view
         self.dual_view_active = True
-        self.display_wise_view()
+        self.display_secondary_view()
         
         # Hide message after 5 seconds
         QTimer.singleShot(5000, lambda: self.wise_message_label.setVisible(False))
     
-    def show_wise_error(self, error_msg):
-        """Show WISE download error message"""
+    def show_secondary_error(self, error_msg):
+        """Show secondary download error message"""
         self.wise_progress_bar.setVisible(False)
         self.wise_message_label.setVisible(True)
         self.wise_message_label.setStyleSheet("color: red; font-weight: bold;")
         self.wise_message_label.setText(f"⚠ {error_msg}")
     
-    def display_wise_view(self):
-        """Display WISE image alongside original or just original"""
+    def display_secondary_view(self):
+        """Display secondary image alongside original or just original"""
         current_file = self.jpg_files[self.current_index]
         image_path = self.image_dir / current_file
         
-        if self.dual_view_active and current_file in self.wise_images:
+        if self.dual_view_active and current_file in self.secondary_images:
             # Load both images in separate containers
             pixmap1 = QPixmap(str(image_path))
-            pixmap2 = QPixmap(self.wise_images[current_file])
+            pixmap2 = QPixmap(self.secondary_images[current_file])
             
             if not pixmap1.isNull() and not pixmap2.isNull():
                 # Calculate width for each image (equal size side-by-side)
@@ -562,7 +571,7 @@ class AstrorankGUI(QMainWindow):
                 self.dual_image_label_2.setPixmap(scaled2)
             else:
                 self.dual_image_label_1.setText("Failed to load original")
-                self.dual_image_label_2.setText("Failed to load WISE")
+                self.dual_image_label_2.setText(f"Failed to load {self.secondary_name}")
         else:
             # Just show original image in single container
             pixmap = QPixmap(str(image_path))
@@ -619,10 +628,10 @@ class AstrorankGUI(QMainWindow):
             comment_item = QTableWidgetItem(comment_text)
             self.table.setItem(i, 3, comment_item)
             
-            # WISE? (checkmark if WISE image downloaded)
-            wise_item = QTableWidgetItem("✓" if filename in self.wise_images else "")
-            wise_item.setTextAlignment(Qt.AlignCenter)
-            self.table.setItem(i, 4, wise_item)
+            # Secondary image indicator (checkmark if secondary image downloaded)
+            secondary_item = QTableWidgetItem("✓" if filename in self.secondary_images else "")
+            secondary_item.setTextAlignment(Qt.AlignCenter)
+            self.table.setItem(i, 4, secondary_item)
             
             # Highlight current row, unhighlight previous
             if i == self.current_index:
@@ -648,10 +657,10 @@ class AstrorankGUI(QMainWindow):
     def submit_rank(self):
         """Submit a rank for the current image"""
         rank_str = self.rank_input.text().strip()
-        is_valid, rank = is_valid_rank(rank_str)
+        is_valid, rank = is_valid_rank(rank_str, self.min_rank, self.max_rank)
         
         if not is_valid:
-            QMessageBox.warning(self, "Invalid Input", "Please enter a number between 0 and 3")
+            QMessageBox.warning(self, "Invalid Input", f"Please enter a number between {self.min_rank} and {self.max_rank}")
             return
         
         current_file = self.jpg_files[self.current_index]
@@ -672,32 +681,32 @@ class AstrorankGUI(QMainWindow):
         if self.current_index > 0:
             self.current_index -= 1
             self.display_image()
-            # If in dual-view mode and new image doesn't have WISE, download it
-            if self.dual_view_active and self.wise_enabled:
-                self._ensure_wise_for_current()
+            # If in dual-view mode and new image doesn't have secondary image, download it
+            if self.dual_view_active and self.secondary_enabled:
+                self._ensure_secondary_for_current()
     
     def go_to_first(self):
         """Go to the first image in the list"""
         self.current_index = 0
         self.display_image()
-        # If in dual-view mode and new image doesn't have WISE, download it
-        if self.dual_view_active and self.wise_enabled:
-            self._ensure_wise_for_current()
+        # If in dual-view mode and new image doesn't have secondary image, download it
+        if self.dual_view_active and self.secondary_enabled:
+            self._ensure_secondary_for_current()
     
     def go_next(self):
         """Go to next image"""
         if self.current_index < len(self.jpg_files) - 1:
             self.current_index += 1
             self.display_image()
-            # If in dual-view mode and new image doesn't have WISE, download it
-            if self.dual_view_active and self.wise_enabled:
-                self._ensure_wise_for_current()
+            # If in dual-view mode and new image doesn't have secondary image, download it
+            if self.dual_view_active and self.secondary_enabled:
+                self._ensure_secondary_for_current()
     
-    def _ensure_wise_for_current(self):
-        """Download WISE image for current image if not already present"""
+    def _ensure_secondary_for_current(self):
+        """Download secondary image for current image if not already present"""
         current_file = self.jpg_files[self.current_index]
-        if current_file not in self.wise_images:
-            self.download_wise_for_current()
+        if current_file not in self.secondary_images:
+            self.download_secondary_for_current()
     
     def toggle_list_visibility(self):
         """Toggle the visibility of the rankings list and reformat the window"""
@@ -982,7 +991,7 @@ class AstrorankGUI(QMainWindow):
         elif self._key_matches_action(event, 'comment'):
             self.open_comment_dialog()
         elif self._key_matches_action(event, 'wise_toggle'):
-            if self.wise_enabled:
+            if self.secondary_enabled:
                 self.toggle_wise_view()
         elif self._key_matches_action(event, 'legacy_survey'):
             self.open_legacy_survey_viewer()
@@ -998,6 +1007,9 @@ class AstrorankGUI(QMainWindow):
             self.rank_input.setText("2")
         elif self._key_matches_action(event, 'rank_3'):
             self.rank_input.setText("3")
+        elif self._check_rank_key(event):
+            # Check if the key matches any configured rank
+            pass  # _check_rank_key handles the input directly
         elif self._key_matches_action(event, 'submit_and_next'):
             self.submit_rank()
             self.go_next()
@@ -1021,6 +1033,15 @@ class AstrorankGUI(QMainWindow):
             self.go_next()
         else:
             super().keyPressEvent(event)
+    
+    def _check_rank_key(self, event) -> bool:
+        """Check if a key is mapped to a rank value and set input accordingly"""
+        key = event.key()
+        if key in self.rank_map:
+            rank_value = self.rank_map[key]
+            self.rank_input.setText(str(rank_value))
+            return True
+        return False
     
     def _key_matches_action(self, event, action_name):
         """Check if keyboard event matches a configured action"""

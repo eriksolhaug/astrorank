@@ -169,7 +169,7 @@ Customize any keyboard shortcut by editing the `keys` section (all keys are case
 }
 ```
 
-Multiple keys can be assigned to the same action using commas (e.g., `"quit": "q,escape"`). Works identically on Windows, macOS, and Linux.
+Multiple keys can be assigned to the same action using commas (e.g., `"quit": "q,escape"`). Works on Windows, macOS, and Linux.
 
 ---
 

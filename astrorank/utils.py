@@ -136,19 +136,21 @@ def find_first_unranked(jpg_files: List[str], rankings: Dict[str, int]) -> int:
     return 0
 
 
-def is_valid_rank(rank_str: str) -> Tuple[bool, int]:
+def is_valid_rank(rank_str: str, min_rank: int = 0, max_rank: int = 3) -> Tuple[bool, int]:
     """
-    Validate that the input is a valid rank (0-3).
+    Validate that the input is a valid rank within the configured range.
     
     Args:
         rank_str: String input from user
+        min_rank: Minimum valid rank value (default 0)
+        max_rank: Maximum valid rank value (default 3)
         
     Returns:
         Tuple of (is_valid, rank_value)
     """
     try:
         rank = int(rank_str.strip())
-        if 0 <= rank <= 3:
+        if min_rank <= rank <= max_rank:
             return True, rank
     except ValueError:
         pass
@@ -193,9 +195,9 @@ def load_config(config_file: str = "config.json") -> Dict:
         Dictionary with configuration, or defaults if file not found
     """
     default_config = {
-        "wise_download": {
+        "secondary_download": {
             "enabled": True,
-            "output_directory": "wise",
+            "name": "WISE",
             "url_template": "https://www.legacysurvey.org/viewer/decals-unwise-neo11/{ra}/{dec}?layer=unwise-neo1&zoom=15",
             "image_url_template": "https://www.legacysurvey.org/data/unwise/neo11/unwise-{ra}-{dec}-{band}.jpg"
         }
@@ -213,9 +215,9 @@ def load_config(config_file: str = "config.json") -> Dict:
         return default_config
 
 
-def download_wise_image(ra: float, dec: float, output_dir: str, config: Dict) -> Optional[str]:
+def download_secondary_image(ra: float, dec: float, output_dir: str, config: Dict) -> Optional[str]:
     """
-    Download WISE unwise neo7 FITS file and create RGB composite JPG
+    Download secondary image (e.g., WISE unwise neo7 FITS file) and create RGB composite JPG
     
     Args:
         ra: Right ascension
@@ -243,6 +245,7 @@ def download_wise_image(ra: float, dec: float, output_dir: str, config: Dict) ->
     pixscale = 0.263672
     
     # Download FITS with W1 (contains both W1 and W2 as separate layers)
+    # Using Legacy Survey/UnWISE data source
     fits_url = f"https://www.legacysurvey.org/viewer/fits-cutout?ra={ra}&dec={dec}&layer=unwise-neo7&size={size}&pixscale={pixscale}&bands=w1"
     
     try:
@@ -340,7 +343,7 @@ def download_wise_image(ra: float, dec: float, output_dir: str, config: Dict) ->
         return str(output_path)
     
     except Exception as e:
-        print(f"Error downloading/processing WISE image: {e}")
+        print(f"Error downloading/processing secondary image: {e}")
         return None
 
 
@@ -392,6 +395,38 @@ def string_to_qt_key(key_string: str) -> List:
         "1": Qt.Key_1,
         "2": Qt.Key_2,
         "3": Qt.Key_3,
+        "4": Qt.Key_4,
+        "5": Qt.Key_5,
+        "6": Qt.Key_6,
+        "7": Qt.Key_7,
+        "8": Qt.Key_8,
+        "9": Qt.Key_9,
+        "a": Qt.Key_A,
+        "b": Qt.Key_B,
+        "c": Qt.Key_C,
+        "d": Qt.Key_D,
+        "e": Qt.Key_E,
+        "f": Qt.Key_F,
+        "g": Qt.Key_G,
+        "h": Qt.Key_H,
+        "i": Qt.Key_I,
+        "j": Qt.Key_J,
+        "k": Qt.Key_K,
+        "l": Qt.Key_L,
+        "m": Qt.Key_M,
+        "n": Qt.Key_N,
+        "o": Qt.Key_O,
+        "p": Qt.Key_P,
+        "q": Qt.Key_Q,
+        "r": Qt.Key_R,
+        "s": Qt.Key_S,
+        "t": Qt.Key_T,
+        "u": Qt.Key_U,
+        "v": Qt.Key_V,
+        "w": Qt.Key_W,
+        "x": Qt.Key_X,
+        "y": Qt.Key_Y,
+        "z": Qt.Key_Z,
         "backtick": Qt.Key_QuoteLeft,
         "return": Qt.Key_Return,
         "enter": Qt.Key_Enter,
@@ -409,3 +444,42 @@ def string_to_qt_key(key_string: str) -> List:
         return [(key_map[clean_key], has_shift)]
     
     return []
+
+
+def parse_rank_config(rank_config: Dict) -> Dict[int, List]:
+    """
+    Parse rank configuration from config.json into a mapping of Qt key enums to rank values.
+    
+    Args:
+        rank_config: Dictionary mapping key strings to rank values (e.g., {"0": 0, "p": 1, "backtick": 0})
+        
+    Returns:
+        Dictionary mapping Qt key enums to rank values {Qt.Key_0: 0, Qt.Key_P: 1, ...}
+    """
+    from PyQt5.QtCore import Qt
+    
+    rank_map = {}
+    
+    for key_str, rank_value in rank_config.items():
+        qt_keys = string_to_qt_key(key_str)
+        for qt_key, _ in qt_keys:
+            rank_map[qt_key] = rank_value
+    
+    return rank_map
+
+
+def get_rank_range(rank_config: Dict) -> Tuple[int, int]:
+    """
+    Get the min and max rank values from rank configuration.
+    
+    Args:
+        rank_config: Dictionary mapping key strings to rank values
+        
+    Returns:
+        Tuple of (min_rank, max_rank)
+    """
+    if not rank_config:
+        return (0, 3)  # Default fallback
+    
+    values = list(rank_config.values())
+    return (min(values), max(values))
