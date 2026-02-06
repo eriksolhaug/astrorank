@@ -76,6 +76,8 @@ Where `<ra>` and `<dec>` are the right ascension and declination in **decimal de
 
 ### Output Files
 
+`astrorank` produces a `rankings.txt` file containing the file name and rank for the given file. If any comments are created, these will be included as a third column in a separate file `rankings_comments.txt`. You can change the output name using the `-o` flag (see above). E.g. running `astrorank /path/to/images/directory -o my_rankings.txt` will produce both a `my_rankings.txt` and a `my_rankings_comments.txt` file.
+
 When downloading secondary images (press `g`), they are saved as:
 
 ```
