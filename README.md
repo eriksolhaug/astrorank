@@ -247,14 +247,14 @@ Multiple keys can be assigned to the same action using commas (e.g., `"quit": "q
 
 | Key | Action |
 |-----|--------|
-| **0-3** | Fill the rank input field (e.g. 0=least likely/worst, 3=most likely/best) |
-| **` (backtick)** | Also works as rank 0 (added as an option to shorten the distance from the 0-3 keys) |
-| **Enter/Return** | Submit current rank and move to next image |
-| **Delete/Backspace** | Clear the rank input field |
-| **Left/Up Arrow** | Go to previous image. Submit rank if entered |
-| **Right/Down Arrow** | Go to next image. Submit rank if entered |
-| **Shift + Left Arrow** | Jump to the first image |
-| **Shift + Right Arrow** | Skip to next unranked image (or submit rank first) |
+| `0-3` | Fill the rank input field (e.g. 0=least likely/worst, 3=most likely/best) |
+| `\`` (backtick) | Also works as rank 0 (added as an option to shorten the distance from the 0-3 keys) |
+| `Enter/Return` | Submit current rank and move to next image |
+| `Delete/Backspace` | Clear the rank input field |
+| `Left/Up Arrow` | Go to previous image. Submit rank if entered |
+| `Right/Down Arrow` | Go to next image. Submit rank if entered |
+| `Shift + Left Arrow` | Jump to the first image |
+| `Shift + Right Arrow` | Skip to next unranked image (or submit rank first) |
 | `c` | Clear the rank for current image |
 | `f` | Fit image to container (reset zoom) |
 | `r` | Reset image container to original size |
@@ -263,7 +263,7 @@ Multiple keys can be assigned to the same action using commas (e.g., `"quit": "q
 | `k` | Open comment dialog for current image |
 | `g` | Download WISE unwise neo7 image (press again to toggle dual view) |
 | `b` | Open Legacy Survey viewer for current coordinates |
-| **+** / **−** | Zoom image in/out |
+| `+` / `−` | Zoom image in/out |
 | `?` | Show/hide keyboard shortcuts helper |
 | `q` | Quit the application |
 
