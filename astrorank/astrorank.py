@@ -1167,7 +1167,7 @@ class HelperDialog(QDialog):
         help_text = QTextEdit()
         help_text.setReadOnly(True)
         help_text.setText("""
-<h2>Astrorank Keyboard Shortcuts</h2>
+<h2>AstroRank Keyboard Shortcuts</h2><br>
 
 <b>Image Navigation:</b><br>
 • <b>← / ↑</b> - Go to previous image<br>
@@ -1189,8 +1189,8 @@ class HelperDialog(QDialog):
 • Double-click a comment in the list to edit it<br>
 <br>
 
-<b>WISE Downloads:</b><br>
-• <b>G</b> - Download WISE unwise neo11 image for current coordinates (if enabled)<br>
+<b>Secondary Downloads:</b><br>
+• <b>G</b> - Download secondary image for current coordinates (if enabled)<br>
 • Press <b>G</b> again to toggle between single and dual view<br>
 <br>
 
