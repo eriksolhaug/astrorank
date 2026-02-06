@@ -26,6 +26,9 @@ setup(
     install_requires=[
         "PyQt5>=5.15.0",
         "Pillow>=8.0.0",
+        "requests>=2.20.0",
+        "astropy>=5.0.0",
+        "numpy>=1.20.0",
     ],
     entry_points={
         "console_scripts": [
