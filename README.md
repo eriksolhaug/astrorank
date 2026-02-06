@@ -247,7 +247,7 @@ Multiple keys can be assigned to the same action using commas (e.g., `"quit": "q
 
 | Key | Action |
 |-----|--------|
-| **0-3** | Fill the rank input field (0=worst, 3=best) |
+| **0-3** | Fill the rank input field (e.g. 0=least likely/worst, 3=most likely/best) |
 | **` (backtick)** | Also works as rank 0 (added as an option to shorten the distance from the 0-3 keys) |
 | **Enter/Return** | Submit current rank and move to next image |
 | **Delete/Backspace** | Clear the rank input field |
