@@ -1,4 +1,4 @@
-# <img src="logo/astrorank_logo.png" alt="astrorank Logo" width="20">&nbsp;&nbsp;astrorank — Image Ranking Tool
+# <img src="logo/astrorank_logo.png" alt="astrorank Logo" width="80">&nbsp;&nbsp;astrorank — Image Ranking Tool
 
 ![PyQt5](https://img.shields.io/badge/PyQt5-5.15+-blue)
 
