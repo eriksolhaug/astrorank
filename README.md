@@ -9,7 +9,7 @@
 ![astropy](https://img.shields.io/badge/astropy-5.0%2B-red)
 ![requests](https://img.shields.io/badge/requests-2.20%2B-orange)
 
-`astrorank` is a PyQt5-based GUI application for efficiently ranking astronomical images. It was inspired by Aidan Cloonan's original `lensranker` tool (an earlier version may have existed) developed for the COOL-LAMPS collaboration and allows the user to provide an interface for browsing and ranking `.jpg` images on a scale of 0-3, with keyboard shortcuts optimized for a fast workflow.
+`astrorank` is a PyQt5-based GUI application for efficiently ranking astronomical images. It was inspired by Aidan Cloonan's original `lensranker` tool (an earlier version may have existed) developed for the COOL-LAMPS collaboration. `astrorank` allows the user to provide an interface for browsing and ranking `.jpg` images on a scale of 0-3, with keyboard shortcuts optimized for a fast workflow.
 
 ---
 
