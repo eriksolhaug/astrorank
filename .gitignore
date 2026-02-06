@@ -1,0 +1,15 @@
+*.pyc
+__pycache__/
+*.egg-info/
+dist/
+build/
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.pytest_cache/
+.coverage
+htmlcov/
+rankings.txt
