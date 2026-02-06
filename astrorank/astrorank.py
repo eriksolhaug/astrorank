@@ -142,6 +142,7 @@ class AstrorankGUI(QMainWindow):
         
         # Load configurable ranks
         rank_config = self.config.get("ranks", {"0": 0, "1": 1, "2": 2, "3": 3, "backtick": 0})
+        self.rank_config = rank_config  # Store original config for error messages
         self.rank_map = parse_rank_config(rank_config)  # Maps Qt key enums to rank values
         self.min_rank, self.max_rank = get_rank_range(rank_config)  # Get valid range
         
@@ -690,10 +691,17 @@ class AstrorankGUI(QMainWindow):
     def submit_rank(self):
         """Submit a rank for the current image"""
         rank_str = self.rank_input.text().strip()
-        is_valid, rank = is_valid_rank(rank_str, self.min_rank, self.max_rank)
+        is_valid, rank = is_valid_rank(rank_str, self.min_rank, self.max_rank, self.rank_config)
         
         if not is_valid:
-            QMessageBox.warning(self, "Invalid Input", f"Please enter a number between {self.min_rank} and {self.max_rank}")
+            # Generate appropriate error message based on rank type
+            if isinstance(self.min_rank, int) and isinstance(self.max_rank, int):
+                error_msg = f"Please enter a number between {self.min_rank} and {self.max_rank}"
+            else:
+                # Use original config keys (not Qt Key objects)
+                valid_keys = ", ".join(self.rank_config.keys()) if self.rank_config else "no ranks configured"
+                error_msg = f"Please enter one of: {valid_keys}"
+            QMessageBox.warning(self, "Invalid Input", error_msg)
             return
         
         current_file = self.jpg_files[self.current_index]

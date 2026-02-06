@@ -136,26 +136,36 @@ def find_first_unranked(jpg_files: List[str], rankings: Dict[str, int]) -> int:
     return 0
 
 
-def is_valid_rank(rank_str: str, min_rank: int = 0, max_rank: int = 3) -> Tuple[bool, int]:
+def is_valid_rank(rank_str: str, min_rank=0, max_rank=3, rank_map=None) -> Tuple[bool]:
     """
-    Validate that the input is a valid rank within the configured range.
+    Validate that the input is a valid rank from configured ranks.
     
     Args:
         rank_str: String input from user
-        min_rank: Minimum valid rank value (default 0)
-        max_rank: Maximum valid rank value (default 3)
+        min_rank: Minimum valid rank value (used for numeric ranges)
+        max_rank: Maximum valid rank value (used for numeric ranges)
+        rank_map: Dictionary mapping rank keys to rank values (preferred if provided)
         
     Returns:
         Tuple of (is_valid, rank_value)
     """
+    rank_str = rank_str.strip()
+    
+    # If rank_map provided, check if input is a valid key
+    if rank_map:
+        if rank_str in rank_map:
+            return True, rank_map[rank_str]
+        return False, None
+    
+    # Fall back to numeric validation
     try:
-        rank = int(rank_str.strip())
+        rank = int(rank_str)
         if min_rank <= rank <= max_rank:
             return True, rank
     except ValueError:
         pass
     
-    return False, -1
+    return False, None
 
 
 def parse_radec_from_filename(filename: str) -> Optional[Tuple[float, float]]:
