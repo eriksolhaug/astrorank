@@ -4,5 +4,29 @@
     "output_directory": "wise",
     "url_template": "https://www.legacysurvey.org/viewer/decals-unwise-neo11/{ra}/{dec}?layer=unwise-neo1&zoom=6",
     "image_url_template": "https://www.legacysurvey.org/data/unwise/neo11/unwise-{ra}-{dec}-{band}.jpg"
+  },
+  "keys": {
+    "clear_input": "delete,backspace",
+    "quit": "q",
+    "clear_rank": "c",
+    "fit_image": "f",
+    "reset_container": "r",
+    "toggle_helper": "?",
+    "toggle_list": "l",
+    "toggle_dark_mode": "d",
+    "comment": "k",
+    "wise_toggle": "g",
+    "legacy_survey": "b",
+    "zoom_in": "plus,equal",
+    "zoom_out": "minus",
+    "rank_0": "0,backtick",
+    "rank_1": "1",
+    "rank_2": "2",
+    "rank_3": "3",
+    "submit_and_next": "return,enter",
+    "previous": "left,up",
+    "next": "right,down",
+    "first_image": "shift+left",
+    "skip_to_next_unranked": "shift+right"
   }
 }

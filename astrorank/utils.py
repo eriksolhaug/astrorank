@@ -342,3 +342,70 @@ def download_wise_image(ra: float, dec: float, output_dir: str, config: Dict) ->
     except Exception as e:
         print(f"Error downloading/processing WISE image: {e}")
         return None
+
+
+def parse_key_string(key_string: str) -> List[str]:
+    """
+    Parse a key string from config into a list of key names.
+    Examples: "q" -> ["q"], "plus,equal" -> ["plus", "equal"], "shift+left" -> ["shift+left"]
+    
+    Args:
+        key_string: String representation of key(s)
+        
+    Returns:
+        List of key name strings
+    """
+    return [k.strip() for k in key_string.split(',')]
+
+
+def string_to_qt_key(key_string: str) -> List:
+    """
+    Convert string representation of keys to Qt key enums.
+    Examples: "q" -> Qt.Key_Q, "delete" -> Qt.Key_Delete, "backtick" -> Qt.Key_QuoteLeft
+    
+    Args:
+        key_string: String representation of key (e.g., "q", "delete", "shift+left")
+        
+    Returns:
+        List of (key_enum, has_shift) tuples
+    """
+    from PyQt5.QtCore import Qt
+    
+    # Key mappings from string names to Qt enums
+    key_map = {
+        "delete": Qt.Key_Delete,
+        "backspace": Qt.Key_Backspace,
+        "q": Qt.Key_Q,
+        "c": Qt.Key_C,
+        "f": Qt.Key_F,
+        "r": Qt.Key_R,
+        "?": Qt.Key_Question,
+        "l": Qt.Key_L,
+        "d": Qt.Key_D,
+        "k": Qt.Key_K,
+        "g": Qt.Key_G,
+        "b": Qt.Key_B,
+        "plus": Qt.Key_Plus,
+        "equal": Qt.Key_Equal,
+        "minus": Qt.Key_Minus,
+        "0": Qt.Key_0,
+        "1": Qt.Key_1,
+        "2": Qt.Key_2,
+        "3": Qt.Key_3,
+        "backtick": Qt.Key_QuoteLeft,
+        "return": Qt.Key_Return,
+        "enter": Qt.Key_Enter,
+        "left": Qt.Key_Left,
+        "up": Qt.Key_Up,
+        "right": Qt.Key_Right,
+        "down": Qt.Key_Down,
+    }
+    
+    # Handle shift modifier
+    has_shift = "shift+" in key_string.lower()
+    clean_key = key_string.lower().replace("shift+", "")
+    
+    if clean_key in key_map:
+        return [(key_map[clean_key], has_shift)]
+    
+    return []

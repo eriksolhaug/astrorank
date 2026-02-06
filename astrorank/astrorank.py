@@ -19,7 +19,8 @@ from PyQt5.QtCore import Qt, QSize, QTimer, QThread, pyqtSignal
 from astrorank.utils import (
     get_jpg_files, load_rankings, save_rankings,
     find_next_unranked, find_first_unranked, is_valid_rank,
-    parse_radec_from_filename, load_config, download_wise_image
+    parse_radec_from_filename, load_config, download_wise_image,
+    parse_key_string, string_to_qt_key
 )
 from astrorank.ui_utils import get_astrorank_icon
 
@@ -114,6 +115,10 @@ class AstrorankGUI(QMainWindow):
         self.wise_images = {}  # Maps filename to path of downloaded WISE image
         self.dual_view_active = False  # Track if we're showing original + WISE side-by-side
         self.download_worker = None  # Reference to download thread
+        
+        # Load configurable keyboard shortcuts
+        self.key_config = self.config.get("keys", {})
+        self._initialize_key_bindings()
         
         # Load image files and rankings
         self.jpg_files = get_jpg_files(str(self.image_dir))
@@ -414,6 +419,36 @@ class AstrorankGUI(QMainWindow):
         
         # Highlight current row in table
         self.update_table()
+    
+    def _initialize_key_bindings(self):
+        """Initialize key binding data for use in keyPressEvent and helper display"""
+        # Parse all key bindings from config for both input and display
+        self.keys = {}
+        
+        for action, key_str in self.key_config.items():
+            key_list = parse_key_string(key_str)
+            self.keys[action] = key_list
+    
+    def _key_matches(self, event_key, action_name, allow_shift=False):
+        """Check if a keyboard event matches a configured action key"""
+        key_strings = self.keys.get(action_name, [])
+        has_shift = event.modifiers() & Qt.ShiftModifier if hasattr(event, 'modifiers') else False
+        
+        for key_str in key_strings:
+            qt_keys = string_to_qt_key(key_str)
+            for qt_key, needs_shift in qt_keys:
+                if event_key == qt_key:
+                    # If key requires shift and we're not allowing shift in this context, skip
+                    if needs_shift and not allow_shift:
+                        continue
+                    # If key requires shift, check we have it
+                    if needs_shift and not has_shift:
+                        continue
+                    # If key doesn't require shift but we have one, and this is not shift+right/left combo
+                    if not needs_shift and has_shift and "+" not in key_str:
+                        continue
+                    return True
+        return False
     
     def open_legacy_survey_viewer(self):
         """Open Legacy Survey viewer for current image's RA/Dec"""
@@ -924,99 +959,83 @@ class AstrorankGUI(QMainWindow):
         self.display_image()
     
     def keyPressEvent(self, event):
-        """Handle keyboard events"""
+        """Handle keyboard events using configurable keys from config.json"""
         key = event.key()
         
-        # Clear input on Delete or Backspace
-        if key == Qt.Key_Delete or key == Qt.Key_Backspace:
+        # Check each action against configured keys
+        if self._key_matches_action(event, 'clear_input'):
             self.rank_input.clear()
-        
-        # Quit on Q or q
-        elif key == Qt.Key_Q:
+        elif self._key_matches_action(event, 'quit'):
             self.close()
-        
-        # Clear rank on C or c
-        elif key == Qt.Key_C:
+        elif self._key_matches_action(event, 'clear_rank'):
             self.clear_rank()
-        
-        # Fit image on F or f
-        elif key == Qt.Key_F:
+        elif self._key_matches_action(event, 'fit_image'):
             self.fit_image()
-        
-        # Reset container on R or r
-        elif key == Qt.Key_R:
+        elif self._key_matches_action(event, 'reset_container'):
             self.reset_image_container()
-        
-        # Toggle helper on ? (Shift+/)
-        elif key == Qt.Key_Question:
+        elif self._key_matches_action(event, 'toggle_helper'):
             self.toggle_helper()
-        
-        # Toggle list visibility on L or l
-        elif key == Qt.Key_L:
+        elif self._key_matches_action(event, 'toggle_list'):
             self.toggle_list_visibility()
-        
-        # Toggle dark mode on D or d
-        elif key == Qt.Key_D:
+        elif self._key_matches_action(event, 'toggle_dark_mode'):
             self.toggle_dark_mode()
-        
-        # Comment on K or k
-        elif key == Qt.Key_K:
+        elif self._key_matches_action(event, 'comment'):
             self.open_comment_dialog()
-        
-        # WISE download on G or g
-        elif key == Qt.Key_G:
+        elif self._key_matches_action(event, 'wise_toggle'):
             if self.wise_enabled:
                 self.toggle_wise_view()
-        
-        # Open Legacy Survey viewer on B or b
-        elif key == Qt.Key_B:
+        elif self._key_matches_action(event, 'legacy_survey'):
             self.open_legacy_survey_viewer()
-        
-        # Zoom on + and -
-        elif key == Qt.Key_Plus or key == Qt.Key_Equal:  # Equal is unshifted +
+        elif self._key_matches_action(event, 'zoom_in'):
             self.zoom_in()
-        
-        elif key == Qt.Key_Minus:
+        elif self._key_matches_action(event, 'zoom_out'):
             self.zoom_out()
-        
-        # Number keys (0-3) - just fill the input field
-        # Backtick (`) also works as 0 for ergonomic reasons
-        elif Qt.Key_0 <= key <= Qt.Key_3:
-            digit = chr(key)
-            self.rank_input.setText(digit)
-        elif key == Qt.Key_QuoteLeft:  # Backtick key (`)
+        elif self._key_matches_action(event, 'rank_0'):
             self.rank_input.setText("0")
-        
-        # Enter key - submit rank and move to next
-        elif key == Qt.Key_Return or key == Qt.Key_Enter:
+        elif self._key_matches_action(event, 'rank_1'):
+            self.rank_input.setText("1")
+        elif self._key_matches_action(event, 'rank_2'):
+            self.rank_input.setText("2")
+        elif self._key_matches_action(event, 'rank_3'):
+            self.rank_input.setText("3")
+        elif self._key_matches_action(event, 'submit_and_next'):
             self.submit_rank()
             self.go_next()
-        
-        # Arrow keys - submit if rank entered, then navigate
-        elif key == Qt.Key_Left or key == Qt.Key_Up:
-            # Shift+Left goes to first image
-            if event.modifiers() & Qt.ShiftModifier:
-                if self.rank_input.text().strip():
-                    self.submit_rank()
-                else:
-                    self.go_to_first()
+        elif self._key_matches_action(event, 'first_image'):
+            if self.rank_input.text().strip():
+                self.submit_rank()
             else:
-                if self.rank_input.text().strip():
-                    self.submit_rank()
-                self.go_previous()
-        elif key == Qt.Key_Right or key == Qt.Key_Down:
-            # Check for Shift modifier for skip behavior
-            if event.modifiers() & Qt.ShiftModifier:
-                if self.rank_input.text().strip():
-                    self.submit_rank()
-                else:
-                    self.skip_to_next_unranked()
+                self.go_to_first()
+        elif self._key_matches_action(event, 'skip_to_next_unranked'):
+            if self.rank_input.text().strip():
+                self.submit_rank()
             else:
-                if self.rank_input.text().strip():
-                    self.submit_rank()
-                self.go_next()
+                self.skip_to_next_unranked()
+        elif self._key_matches_action(event, 'previous'):
+            if self.rank_input.text().strip():
+                self.submit_rank()
+            self.go_previous()
+        elif self._key_matches_action(event, 'next'):
+            if self.rank_input.text().strip():
+                self.submit_rank()
+            self.go_next()
         else:
             super().keyPressEvent(event)
+    
+    def _key_matches_action(self, event, action_name):
+        """Check if keyboard event matches a configured action"""
+        key = event.key()
+        has_shift = event.modifiers() & Qt.ShiftModifier
+        key_strings = self.keys.get(action_name, [])
+        
+        for key_str in key_strings:
+            qt_keys = string_to_qt_key(key_str)
+            for qt_key, needs_shift in qt_keys:
+                if key == qt_key:
+                    # Check shift modifier requirement
+                    if needs_shift == has_shift:
+                        return True
+        return False
     
     def closeEvent(self, event):
         """Handle window close"""
