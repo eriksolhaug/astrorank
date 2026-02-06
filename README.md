@@ -73,6 +73,94 @@ astrorank /path/to/images/directory -o my_rankings.txt # Resumes the session for
 
 ---
 
+## Configuration
+
+AstroRank uses a `config.json` file to customize keyboard shortcuts, ranking scales, and the survey URL for the dual-panel view. The configuration file is automatically created in the working directory on first run with default values.
+
+### Configuring the Survey URL
+
+To use a different astronomical survey for the dual-panel view (press **G** to toggle), edit the `url_template` in the `wise_download` section:
+
+```json
+"wise_download": {
+  "enabled": true,
+  "output_directory": "wise",
+  "url_template": "https://www.legacysurvey.org/viewer/decals-unwise-neo11/{ra}/{dec}?layer=unwise-neo1&zoom=15"
+}
+```
+
+**Key parameters:**
+- `{ra}` and `{dec}` are automatically replaced with coordinates parsed from your image filenames
+- `zoom=15` controls the zoom level in the viewer (adjust as needed; higher values = more zoom)
+- Works on Windows, macOS, and Linux
+
+### Custom Ranking Scale
+
+By default, AstroRank uses ranks 0-3. To use a different scale (e.g., 1-5, 0-6, or custom values), modify the `ranks` section:
+
+```json
+"ranks": {
+  "0": 0,
+  "1": 1,
+  "2": 2,
+  "3": 3,
+  "backtick": 0
+}
+```
+
+Example for 1-5 scale:
+```json
+"ranks": {
+  "1": 1,
+  "2": 2,
+  "3": 3,
+  "4": 4,
+  "5": 5
+}
+```
+
+You can also assign any key to a rank value:
+```json
+"ranks": {
+  "p": 1,
+  "e": 2,
+  "f": 3,
+  "g": 4,
+  "b": 5
+}
+```
+
+The UI will automatically update to show "Rank (min-max):" based on your configured values.
+
+### Custom Keyboard Shortcuts
+
+Customize any keyboard shortcut by editing the `keys` section (all keys are case-insensitive):
+
+```json
+"keys": {
+  "quit": "q",
+  "clear_rank": "c",
+  "fit_image": "f",
+  "reset_container": "r",
+  "toggle_list": "l",
+  "toggle_dark_mode": "d",
+  "comment": "k",
+  "wise_toggle": "g",
+  "legacy_survey": "b",
+  "zoom_in": "plus,equal",
+  "zoom_out": "minus",
+  "submit_and_next": "return,enter",
+  "previous": "left,up",
+  "next": "right,down",
+  "first_image": "shift+left",
+  "skip_to_next_unranked": "shift+right"
+}
+```
+
+Multiple keys can be assigned to the same action using commas (e.g., `"quit": "q,escape"`). Works identically on Windows, macOS, and Linux.
+
+---
+
 ## Keyboard Shortcuts
 
 **Fast Workflow:** Press a number (0-3), then press Enter or arrow keys to submit and move.
