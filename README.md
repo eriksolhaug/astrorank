@@ -2,7 +2,12 @@
 
 *An Image Ranking Tool for Astronomical Images*
 
+![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
 ![PyQt5](https://img.shields.io/badge/PyQt5-5.15+-blue)
+![Pillow](https://img.shields.io/badge/Pillow-8.0%2B-green)
+![numpy](https://img.shields.io/badge/numpy-1.20%2B-yellow)
+![astropy](https://img.shields.io/badge/astropy-5.0%2B-red)
+![requests](https://img.shields.io/badge/requests-2.20%2B-orange)
 
 `astrorank` is a PyQt5-based GUI application for efficiently ranking astronomical images. It was inspired by Aidan Cloonan's original `lensranker` tool developed for the COOL-LAMPS collaboration and allows the user to provide an interface for browsing and ranking `.jpg` images on a scale of 0-3, with keyboard shortcuts optimized for a fast workflow.
 
