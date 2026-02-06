@@ -399,9 +399,9 @@ class AstrorankGUI(QMainWindow):
         
         if current_file in self.rankings:
             rank = self.rankings[current_file]
-            self.image_info_label.setText(f"<table width='100%'><tr><td>{current_file}</td><td align='right'>(Rank: {rank}) [{current_index_display}/{total_images}]</td></tr></table>")
+            self.image_info_label.setText(f"<table style='width: auto;'><tr><td style='padding: 0 10px 0 0;'>{current_file}</td><td align='right'>(Rank: {rank}) [{current_index_display}/{total_images}]</td></tr></table>")
         else:
-            self.image_info_label.setText(f"<table width='100%'><tr><td>{current_file}</td><td align='right'>[{current_index_display}/{total_images}]</td></tr></table>")
+            self.image_info_label.setText(f"<table style='width: auto;'><tr><td style='padding: 0 10px 0 0;'>{current_file}</td><td align='right'>[{current_index_display}/{total_images}]</td></tr></table>")
         
         # Update window title
         self.setWindowTitle(f"imrank - {current_file}")
