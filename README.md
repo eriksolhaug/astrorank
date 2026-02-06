@@ -62,6 +62,28 @@ astrorank /path/to/images/directory # This starts the GUI and looks for all `.jp
 astrorank /path/to/images/directory -o my_rankings.txt # Specifies custom output file
 ```
 
+### Image Filename Format
+
+For AstroRank to work with the browser (press **B**) and secondary image download features (press **G**), your image filenames must follow this format:
+
+```
+<any_name>_<ra>_<dec>.jpg
+```
+
+Where `<ra>` and `<dec>` are the right ascension and declination in **decimal degrees**.
+
+**Example:** `qso_aug_aug21_2025A_run1_100.00371_-69.056759.jpg`
+
+### Output Files
+
+When downloading secondary images (press **G**), they are saved as:
+
+```
+<survey_name>_<ra>_<dec>.jpg
+```
+
+**Example:** `wise_100.00371_-69.056759.jpg` or `galex_100.00371_-69.056759.jpg`
+
 ### Resume Previous Session
 
 Running the code specifying an already existing rank file will allow you to resume that previous session.
