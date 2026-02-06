@@ -164,7 +164,7 @@ This is useful for maintaining different configurations for different projects o
 
 ### Custom Ranking Scale
 
-By default, AstroRank uses ranks 0-3 with keys 0, 1, 2, 3, and backtick (\`) which map to rank 0. To use a different scale or custom keys, **edit the `config.json` file** in the astrorank package directory and modify the `ranks` section:
+By default, AstroRank uses ranks 0-3 with keys 0, 1, 2, 3, and backtick (\`) which map to rank 0. To use a different scale or custom keys, **edit the `config.json` file or (preferably) create a new .json file and load with the `-c` flag** in the astrorank package directory and modify the `ranks` section:
 
 ```json
 "ranks": {
