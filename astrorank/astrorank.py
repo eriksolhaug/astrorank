@@ -405,11 +405,6 @@ class AstrorankGUI(QMainWindow):
         # Set focus to main window so arrow keys work for navigation
         self.setFocus()
         
-        # Reset WISE view state when navigating to new image
-        self.dual_view_active = False
-        self.wise_progress_bar.setVisible(False)
-        self.wise_message_label.setVisible(False)
-        
         # Highlight current row in table
         self.update_table()
     
@@ -630,17 +625,32 @@ class AstrorankGUI(QMainWindow):
         if self.current_index > 0:
             self.current_index -= 1
             self.display_image()
+            # If in dual-view mode and new image doesn't have WISE, download it
+            if self.dual_view_active and self.wise_enabled:
+                self._ensure_wise_for_current()
     
     def go_to_first(self):
         """Go to the first image in the list"""
         self.current_index = 0
         self.display_image()
+        # If in dual-view mode and new image doesn't have WISE, download it
+        if self.dual_view_active and self.wise_enabled:
+            self._ensure_wise_for_current()
     
     def go_next(self):
         """Go to next image"""
         if self.current_index < len(self.jpg_files) - 1:
             self.current_index += 1
             self.display_image()
+            # If in dual-view mode and new image doesn't have WISE, download it
+            if self.dual_view_active and self.wise_enabled:
+                self._ensure_wise_for_current()
+    
+    def _ensure_wise_for_current(self):
+        """Download WISE image for current image if not already present"""
+        current_file = self.jpg_files[self.current_index]
+        if current_file not in self.wise_images:
+            self.download_wise_for_current()
     
     def toggle_list_visibility(self):
         """Toggle the visibility of the rankings list and reformat the window"""
