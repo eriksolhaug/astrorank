@@ -4,9 +4,9 @@
   },
   "secondary_download": {
     "enabled": true,
-    "name": "WISE",
-    "url_template": "https://www.legacysurvey.org/viewer/decals-unwise-neo11/{ra}/{dec}?layer=unwise-neo1&zoom=15",
-    "url_template_download": "https://www.legacysurvey.org/viewer/fits-cutout?ra={ra}&dec={dec}&layer=unwise-neo7&size=512&pixscale=0.263672&bands=w1",
+    "name": "GALEX",
+    "url_template": "https://www.legacysurvey.org/viewer/decals-galex/{ra}/{dec}?layer=galex&zoom=15",
+    "url_template_download": "https://www.legacysurvey.org/viewer/fits-cutout?ra={ra}&dec={dec}&layer=galex&size=512&pixscale=0.263672&bands=fuv,nuv",
     "extensions": {
       "0": ["R", "G"],
       "1": ["B"]

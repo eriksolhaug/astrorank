@@ -134,6 +134,7 @@ class AstrorankGUI(QMainWindow):
         self.secondary_images = {}  # Maps filename to path of downloaded secondary image
         self.dual_view_active = False  # Track if we're showing original + secondary image side-by-side
         self.download_worker = None  # Reference to download thread
+        self.downloading = False  # Flag to disable navigation during download
         
         # Load configurable keyboard shortcuts
         self.key_config = self.config.get("keys", {})
@@ -435,7 +436,7 @@ class AstrorankGUI(QMainWindow):
             self.image_info_label.setText(f"<table style='width: 100%;'><tr><td style='padding-right: 10px;'>{current_file}</td><td style='width: 100%;'></td><td align='right'>[{current_index_display}/{total_images}]</td></tr></table>")
         
         # Update window title
-        self.setWindowTitle(f"imrank - {current_file}")
+        self.setWindowTitle("🔭 AstroRank")
         
         # Clear rank input (but don't focus it - keep focus on main window for arrow keys)
         self.rank_input.clear()
@@ -531,6 +532,11 @@ class AstrorankGUI(QMainWindow):
         self.wise_progress_bar.setVisible(True)
         self.wise_progress_bar.setValue(0)
         
+        # Disable navigation keys and buttons during download
+        self.downloading = True
+        self.prev_button.setEnabled(False)
+        self.next_button.setEnabled(False)
+        
         # Create and start download worker thread
         self.download_worker = WiseDownloadWorker(ra, dec, str(self.secondary_output_dir), self.config)
         self.download_worker.finished.connect(self.on_secondary_download_success)
@@ -539,6 +545,11 @@ class AstrorankGUI(QMainWindow):
     
     def on_secondary_download_success(self, image_path):
         """Handle successful secondary image download"""
+        # Re-enable navigation
+        self.downloading = False
+        self.prev_button.setEnabled(True)
+        self.next_button.setEnabled(True)
+        
         current_file = self.jpg_files[self.current_index]
         self.secondary_images[current_file] = image_path
         
@@ -557,6 +568,11 @@ class AstrorankGUI(QMainWindow):
     
     def show_secondary_error(self, error_msg):
         """Show secondary download error message"""
+        # Re-enable navigation
+        self.downloading = False
+        self.prev_button.setEnabled(True)
+        self.next_button.setEnabled(True)
+        
         self.wise_progress_bar.setVisible(False)
         self.wise_message_label.setVisible(True)
         self.wise_message_label.setStyleSheet("color: red; font-weight: bold;")
@@ -988,6 +1004,10 @@ class AstrorankGUI(QMainWindow):
         """Handle keyboard events using configurable keys from config.json"""
         key = event.key()
         
+        # Disable navigation keys during secondary image download
+        if self.downloading and key in [Qt.Key_Left, Qt.Key_Right, Qt.Key_Up, Qt.Key_Down, Qt.Key_Return, Qt.Key_Enter]:
+            return
+        
         # Check rank keys first (from config.json "ranks" section)
         if self._check_rank_key(event):
             return  # Rank key was handled
@@ -1235,6 +1255,10 @@ Examples:
     
     try:
         app = QApplication(sys.argv)
+        
+        # Set application icon for better macOS dock/menu bar integration
+        icon = get_astrorank_icon()
+        app.setWindowIcon(icon)
         
         # Handle Ctrl+C gracefully
         def signal_handler(sig, frame):

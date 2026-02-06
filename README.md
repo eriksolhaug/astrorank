@@ -75,37 +75,68 @@ astrorank /path/to/images/directory -o my_rankings.txt # Resumes the session for
 
 ## Configuration
 
-AstroRank uses a `config.json` file to customize keyboard shortcuts, ranking scales, and the survey URL for the dual-panel view. The configuration file is automatically created in the working directory on first run with default values.
+AstroRank uses a `config.json` file to customize keyboard shortcuts, ranking scales, browser URLs, and the survey for the dual-panel view. The configuration file is automatically created in the working directory on first run with default values.
 
-### Configuring the Survey URL
+### Survey and Browser Configuration
 
-To use a different astronomical survey for the dual-panel view (press **G** to toggle), edit the `url_template` and `name` in the `secondary_download` section:
+The configuration supports two main sections for URL-based features:
 
+**Browser Section** - for opening survey viewers (press **B**):
+```json
+"browser": {
+  "url_template": "https://www.legacysurvey.org/viewer/?ra={ra}&dec={dec}&layer=ls-dr10&zoom=16"
+}
+```
+
+**Secondary Download Section** - for downloading and compositing FITS images (press **G**):
 ```json
 "secondary_download": {
   "enabled": true,
   "name": "WISE",
-  "url_template": "https://www.legacysurvey.org/viewer/decals-unwise-neo11/{ra}/{dec}?layer=unwise-neo1&zoom=15"
+  "url_template_download": "https://www.legacysurvey.org/viewer/fits-cutout?ra={ra}&dec={dec}&layer=unwise-neo7&size=512&pixscale=0.263672&bands=w1",
+  "extensions": {
+    "0": ["R", "G"],
+    "1": ["B"]
+  }
 }
 ```
 
 **Parameters:**
-- `{ra}` and `{dec}` in the `url_template` are automatically replaced with coordinates parsed from your image filenames
-- `zoom=15` in the `url_template` controls the zoom level in the viewer (adjust as needed; higher values = more zoom)
-- `name` is used for UI labels and output directory naming
+- `{ra}` and `{dec}` placeholders are automatically replaced with coordinates parsed from your image filenames
+- `url_template_download`: The URL template for downloading FITS files. Supports `{ra}` and `{dec}` substitution
+- `extensions`: Maps FITS layer indices to RGB channels. Each layer can map to one or more channels:
+  - `"0": ["R", "G"]` → Layer 0 goes to both Red and Green channels
+  - `"1": ["B"]` → Layer 1 goes to Blue channel
+  - Layers and channels are configured by index
+- `name`: Used for UI labels and output file naming
+- `enabled`: Set to `false` to disable secondary image downloads
 - Works on Windows, macOS, and Linux
 
-**Configuring FITS Extensions for Different Surveys:**
-Different surveys provide FITS files with different band/extension structures. The current implementation assumes a 3D FITS array where:
-- Layer 0 → Blue channel
-- Layer 1 → Green and Red channels
+**Example: GALEX Configuration**
+```json
+"secondary_download": {
+  "enabled": true,
+  "name": "GALEX",
+  "url_template_download": "https://www.legacysurvey.org/viewer/fits-cutout?ra={ra}&dec={dec}&layer=galex&size=512&pixscale=0.263672&bands=fuv,nuv",
+  "extensions": {
+    "0": ["R", "G"],
+    "1": ["B"]
+  }
+}
+```
 
-For a custom survey, you need to:
-1. Check the survey's documentation for FITS file structure (number of extensions, which bands they contain)
-2. Update `astrorank/utils.py` in the `download_secondary_image()` function to extract the correct layers for your survey's FITS format
-3. Map the extracted data to RGB channels appropriately
+This approach makes the system fully configurable - different surveys can be used by simply changing the configuration, no code modification needed.
 
-Example: If your survey has a single 2D FITS extension instead of a 3D array, you'd modify the layer extraction logic accordingly.
+### Loading a Custom Configuration File
+
+By default, AstroRank loads `config.json` from the current working directory, or falls back to the package installation directory. To use a custom configuration file, use the `-c` or `--config` flag:
+
+```bash
+astrorank /path/to/images -c /path/to/custom_config.json
+astrorank /path/to/images --config /path/to/custom_config.json
+```
+
+This is useful for maintaining different configurations for different projects or surveys.
 
 ### Custom Ranking Scale
 
@@ -156,7 +187,6 @@ Or use the keys as the rank values themselves:
 **Important:** 
 - Ensure rank keys do not overlap with any other key functionalities defined in the `keys` section (e.g., don't use 'q' as a rank if 'q' is your quit key). It is the user's responsibility to avoid these conflicts.
 - After editing `config.json`, restart astrorank for changes to take effect
-- Use `-c` flag to load a custom config: `astrorank /path/to/images -c /path/to/custom_config.json`
 
 The UI will automatically update to show "Rank (min-max):" based on your configured values.
 

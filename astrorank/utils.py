@@ -195,11 +195,18 @@ def load_config(config_file: str = "config.json") -> Dict:
         Dictionary with configuration, or defaults if file not found
     """
     default_config = {
+        "browser": {
+            "url_template": "https://www.legacysurvey.org/viewer/?ra={ra}&dec={dec}&layer=ls-dr10&zoom=16"
+        },
         "secondary_download": {
             "enabled": True,
             "name": "WISE",
             "url_template": "https://www.legacysurvey.org/viewer/decals-unwise-neo11/{ra}/{dec}?layer=unwise-neo1&zoom=15",
-            "image_url_template": "https://www.legacysurvey.org/data/unwise/neo11/unwise-{ra}-{dec}-{band}.jpg"
+            "url_template_download": "https://www.legacysurvey.org/viewer/fits-cutout?ra={ra}&dec={dec}&layer=unwise-neo7&size=512&pixscale=0.263672&bands=w1",
+            "extensions": {
+                "0": ["R", "G"],
+                "1": ["B"]
+            }
         },
         "ranks": {
             "0": 0,
@@ -238,13 +245,13 @@ def load_config(config_file: str = "config.json") -> Dict:
 
 def download_secondary_image(ra: float, dec: float, output_dir: str, config: Dict) -> Optional[str]:
     """
-    Download secondary image (e.g., WISE unwise neo7 FITS file) and create RGB composite JPG
+    Download secondary image FITS file and create RGB composite JPG based on config
     
     Args:
         ra: Right ascension
         dec: Declination
         output_dir: Directory to save image to
-        config: Configuration dictionary
+        config: Configuration dictionary with secondary_download section
         
     Returns:
         Path to generated RGB JPG image, or None if download failed
@@ -261,13 +268,18 @@ def download_secondary_image(ra: float, dec: float, output_dir: str, config: Dic
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
     
-    # FITS cutout parameters
-    size = 512
-    pixscale = 0.263672
+    # Get configuration
+    secondary_config = config.get("secondary_download", {})
+    survey_name = secondary_config.get("name", "secondary")
+    url_template_download = secondary_config.get("url_template_download")
+    extensions_mapping = secondary_config.get("extensions", {})
     
-    # Download FITS with W1 (contains both W1 and W2 as separate layers)
-    # Using Legacy Survey/UnWISE data source
-    fits_url = f"https://www.legacysurvey.org/viewer/fits-cutout?ra={ra}&dec={dec}&layer=unwise-neo7&size={size}&pixscale={pixscale}&bands=w1"
+    if not url_template_download:
+        print(f"Error: url_template_download not found in secondary_download config")
+        return None
+    
+    # Substitute placeholders in download URL
+    fits_url = url_template_download.replace("{ra}", str(ra)).replace("{dec}", str(dec))
     
     try:
         # Download FITS file
@@ -275,7 +287,7 @@ def download_secondary_image(ra: float, dec: float, output_dir: str, config: Dic
         response.raise_for_status()
         
         # Save temporary FITS file
-        fits_path = Path(output_dir) / f"temp_wise_{ra}_{dec}.fits"
+        fits_path = Path(output_dir) / f"temp_{survey_name}_{ra}_{dec}.fits"
         
         with open(fits_path, 'wb') as f:
             f.write(response.content)
@@ -285,18 +297,20 @@ def download_secondary_image(ra: float, dec: float, output_dir: str, config: Dic
         data = hdul[0].data.astype(float)
         hdul.close()
         
-        # Extract W1 and W2 from the 3D array (2, H, W)
-        # Layer 0 = W1, Layer 1 = W2
-        if len(data.shape) == 3 and data.shape[0] == 2:
-            data_w1 = data[0]
-            data_w2 = data[1]
+        # Get image dimensions (assume last two dims are spatial)
+        if len(data.shape) == 3:
+            n_layers = data.shape[0]
+            height, width = data.shape[1], data.shape[2]
+        elif len(data.shape) == 2:
+            n_layers = 1
+            height, width = data.shape
+            data = np.expand_dims(data, axis=0)  # Add layer dimension
         else:
-            print(f"Error: Expected shape (2, H, W), got {data.shape}")
+            print(f"Error: Unexpected FITS shape {data.shape}")
             fits_path.unlink()
             return None
         
         # Apply asinh (inverse hyperbolic sine) scaling - better for astronomy
-        # This preserves faint features while suppressing bright sources
         def apply_asinh_scaling(data, Q=8.0):
             """
             Apply asinh scaling for better visualization of astronomical images.
@@ -338,24 +352,31 @@ def download_secondary_image(ra: float, dec: float, output_dir: str, config: Dic
             
             return (scaled * 255).astype(np.uint8)
         
-        # Apply asinh scaling to both bands
-        w1_scaled = apply_asinh_scaling(data_w1)
-        w2_scaled = apply_asinh_scaling(data_w2)
+        # Create RGB image based on extension mapping
+        rgb = np.zeros((height, width, 3), dtype=np.uint8)
         
-        # Create RGB image
-        # W1 = Blue channel
-        # W2 = Green and Red channels
-        rgb = np.zeros((size, size, 3), dtype=np.uint8)
-        rgb[:, :, 0] = w2_scaled  # Red = W2
-        rgb[:, :, 1] = w2_scaled  # Green = W2
-        rgb[:, :, 2] = w1_scaled  # Blue = W1
+        # Map each layer to RGB channels according to config
+        for layer_idx_str, channels in extensions_mapping.items():
+            layer_idx = int(layer_idx_str)
+            if layer_idx < n_layers:
+                scaled = apply_asinh_scaling(data[layer_idx])
+                # Handle both single channel (string) and multiple channels (list)
+                if isinstance(channels, str):
+                    channels = [channels]
+                for channel in channels:
+                    if channel == "R":
+                        rgb[:, :, 0] = scaled
+                    elif channel == "G":
+                        rgb[:, :, 1] = scaled
+                    elif channel == "B":
+                        rgb[:, :, 2] = scaled
         
         # Flip image vertically (across y-axis) for correct orientation
         rgb = np.flipud(rgb)
         
         # Convert to PIL Image and save as JPG
         image = Image.fromarray(rgb, mode='RGB')
-        output_path = Path(output_dir) / f"wise_{ra}_{dec}.jpg"
+        output_path = Path(output_dir) / f"{survey_name}_{ra}_{dec}.jpg"
         image.save(output_path, quality=90)
         
         # Clean up temporary FITS file
