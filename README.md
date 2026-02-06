@@ -1,5 +1,7 @@
 # astrorank — Image Ranking Tool
 
+![PyQt5](https://img.shields.io/badge/PyQt5-5.15+-blue)
+
 `astrorank` is a PyQt5-based GUI application for efficiently ranking astronomical images. It provides an intuitive interface for browsing and ranking `.jpg` images on a scale of 0-3, with keyboard shortcuts optimized for fast workflow.
 
 ---
@@ -70,6 +72,7 @@ This starts with the first unranked image from your previous session and keeps a
 |-----|--------|
 | **0-3** | Fill the rank input field (0=worst, 3=best) |
 | **Enter/Return** | Submit current rank and move to next image |
+| **Delete/Backspace** | Clear the rank input field |
 | **Left/Up Arrow** | Go to previous image. Submit rank if entered |
 | **Right/Down Arrow** | Go to next image. Submit rank if entered |
 | **Shift + Left Arrow** | Jump to the first image |

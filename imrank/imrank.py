@@ -418,8 +418,12 @@ class ImrankGUI(QMainWindow):
         """Handle keyboard events"""
         key = event.key()
         
+        # Clear input on Delete or Backspace
+        if key == Qt.Key_Delete or key == Qt.Key_Backspace:
+            self.rank_input.clear()
+        
         # Quit on Q or q
-        if key == Qt.Key_Q:
+        elif key == Qt.Key_Q:
             self.close()
         
         # Clear rank on C or c
@@ -498,25 +502,30 @@ class HelperDialog(QDialog):
         help_text.setText("""
 <h2>Astrorank Keyboard Shortcuts</h2>
 
-<b>Image Navigation:</b>
-• <b>← / ↑</b> - Go to previous image
-• <b>→ / ↓</b> - Go to next image
-• <b>Shift+←</b> - Jump to first image
-• <b>Shift+→</b> - Skip to next unranked image
+<b>Image Navigation:</b><br>
+• <b>← / ↑</b> - Go to previous image<br>
+• <b>→ / ↓</b> - Go to next image<br>
+• <b>Shift+←</b> - Jump to first image<br>
+• <b>Shift+→</b> - Skip to next unranked image<br>
+<br>
 
-<b>Ranking:</b>
-• <b>0-3</b> - Enter rank (0=worst, 3=best)
-• <b>Enter/Return</b> - Submit rank and move to next image
-• <b>C</b> - Clear rank for current image
+<b>Ranking:</b><br>
+• <b>0-3</b> - Enter rank (0=worst, 3=best)<br>
+• <b>Enter/Return</b> - Submit rank and move to next image<br>
+• <b>Delete/Backspace</b> - Clear input field<br>
+• <b>C</b> - Clear rank for current image<br>
+<br>
 
-<b>Display:</b>
-• <b>L</b> - Toggle image list panel visibility
-• <b>+</b> / <b>−</b> - Zoom image in/out (incremental)
-• <b>F</b> - Fit image to container (reset zoom)
-• <b>?</b> - Show/hide this helper window
+<b>Display:</b><br>
+• <b>L</b> - Toggle image list panel visibility<br>
+• <b>+</b> / <b>−</b> - Zoom image in/out (incremental)<br>
+• <b>F</b> - Fit image to container (reset zoom)<br>
+• <b>?</b> - Show/hide this helper window<br>
+<br>
 
-<b>Application:</b>
-• <b>Q</b> - Quit astrorank
+<b>Application:</b><br>
+• <b>Q</b> - Quit astrorank<br>
+<br>
 
 <p><i>Tip: Press a number key to fill the rank field, then use arrow keys to navigate—the rank will be submitted automatically.</i></p>
         """)
