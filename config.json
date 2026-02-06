@@ -1,0 +1,8 @@
+{
+  "wise_download": {
+    "enabled": true,
+    "output_directory": "wise",
+    "url_template": "https://www.legacysurvey.org/viewer/decals-unwise-neo11/{ra}/{dec}?layer=unwise-neo1&zoom=6",
+    "image_url_template": "https://www.legacysurvey.org/data/unwise/neo11/unwise-{ra}-{dec}-{band}.jpg"
+  }
+}

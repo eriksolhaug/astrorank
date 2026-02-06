@@ -5,21 +5,48 @@ astrorank - Image Ranking GUI Application
 import sys
 import signal
 import argparse
+import webbrowser
 from pathlib import Path
 
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
     QLabel, QLineEdit, QPushButton, QScrollArea, QTableWidget, QTableWidgetItem,
-    QHeaderView, QMessageBox, QDialog, QTextEdit, QInputDialog
+    QHeaderView, QMessageBox, QDialog, QTextEdit, QInputDialog, QProgressBar
 )
 from PyQt5.QtGui import QPixmap, QColor, QFont, QIcon
-from PyQt5.QtCore import Qt, QSize, QTimer
+from PyQt5.QtCore import Qt, QSize, QTimer, QThread, pyqtSignal
 
 from astrorank.utils import (
     get_jpg_files, load_rankings, save_rankings,
-    find_next_unranked, find_first_unranked, is_valid_rank
+    find_next_unranked, find_first_unranked, is_valid_rank,
+    parse_radec_from_filename, load_config, download_wise_image
 )
 from astrorank.ui_utils import get_astrorank_icon
+
+
+class WiseDownloadWorker(QThread):
+    """Worker thread for downloading WISE images without blocking UI"""
+    progress = pyqtSignal(int)
+    finished = pyqtSignal(str)  # Emits path to downloaded image or empty string on failure
+    error = pyqtSignal(str)  # Emits error message
+    
+    def __init__(self, ra, dec, output_dir, config):
+        super().__init__()
+        self.ra = ra
+        self.dec = dec
+        self.output_dir = output_dir
+        self.config = config
+    
+    def run(self):
+        """Run the download in a separate thread"""
+        try:
+            result = download_wise_image(self.ra, self.dec, self.output_dir, self.config)
+            if result:
+                self.finished.emit(result)
+            else:
+                self.error.emit("Failed to download WISE image")
+        except Exception as e:
+            self.error.emit(f"Download error: {str(e)}")
 
 
 class CommentDialog(QDialog):
@@ -71,11 +98,22 @@ class AstrorankGUI(QMainWindow):
         self.save_counter = 0  # Batch saves every N rankings
         self.table_initialized = False  # Track if table has been populated
         self.list_visible = True  # Track list visibility state
-        self.zoom_level = 1.0  # Track zoom level for images
+        self.zoom_level = 1.0  # Track zoom level for single image view
+        self.dual_view_zoom = 1.0  # Track zoom level for dual-view images
         self.helper_visible = False  # Track helper window visibility
         self.helper_window = None  # Reference to helper dialog
         self.skip_scroll = False  # Skip scroll-to-center on click navigation
         self.dark_mode = False  # Track dark mode state
+        self.original_container_width = 680  # Original container width for reset
+        self.original_container_height = 680  # Original container height for reset
+        
+        # WISE download functionality
+        self.config = load_config()
+        self.wise_enabled = self.config.get("wise_download", {}).get("enabled", True)
+        self.wise_output_dir = Path(image_dir) / self.config.get("wise_download", {}).get("output_directory", "wise")
+        self.wise_images = {}  # Maps filename to path of downloaded WISE image
+        self.dual_view_active = False  # Track if we're showing original + WISE side-by-side
+        self.download_worker = None  # Reference to download thread
         
         # Load image files and rankings
         self.jpg_files = get_jpg_files(str(self.image_dir))
@@ -161,15 +199,58 @@ class AstrorankGUI(QMainWindow):
         self.image_label.setAlignment(Qt.AlignCenter)
         image_container_layout.addWidget(self.image_label)
         
+        # WISE download progress bar and message
+        self.wise_progress_bar = QProgressBar()
+        self.wise_progress_bar.setVisible(False)
+        self.wise_progress_bar.setMaximumHeight(20)
+        image_container_layout.addWidget(self.wise_progress_bar)
+        
+        self.wise_message_label = QLabel()
+        self.wise_message_label.setVisible(False)
+        self.wise_message_label.setAlignment(Qt.AlignCenter)
+        self.wise_message_label.setMaximumHeight(25)
+        image_container_layout.addWidget(self.wise_message_label)
+        
         image_container.setLayout(image_container_layout)
+        image_container.setMinimumHeight(400)
+        image_container.setMinimumWidth(400)
         image_container.setMaximumHeight(680)
         image_container.setMaximumWidth(680)
+        # Store reference for resizing
+        self.image_container = image_container
+        
+        # Create dual-view container (side-by-side images for WISE comparison)
+        dual_view_container = QWidget()
+        dual_view_layout = QHBoxLayout()
+        dual_view_layout.setContentsMargins(0, 0, 0, 0)
+        dual_view_layout.setSpacing(10)
+        
+        # Left image in dual view
+        self.dual_image_label_1 = QLabel()
+        self.dual_image_label_1.setStyleSheet("border: 1px solid black;")
+        self.dual_image_label_1.setAlignment(Qt.AlignCenter)
+        dual_view_layout.addWidget(self.dual_image_label_1)
+        
+        # Right image in dual view
+        self.dual_image_label_2 = QLabel()
+        self.dual_image_label_2.setStyleSheet("border: 1px solid black;")
+        self.dual_image_label_2.setAlignment(Qt.AlignCenter)
+        dual_view_layout.addWidget(self.dual_image_label_2)
+        
+        dual_view_container.setLayout(dual_view_layout)
+        dual_view_container.setMinimumHeight(400)
+        dual_view_container.setMinimumWidth(400)
+        dual_view_container.setMaximumHeight(680)
+        dual_view_container.setMaximumWidth(680)
+        dual_view_container.setVisible(False)  # Hidden by default
+        self.dual_view_container = dual_view_container
         
         # Wrapper for image container with zoom buttons
         image_wrapper = QHBoxLayout()
         image_wrapper.setContentsMargins(0, 0, 0, 0)
         image_wrapper.setSpacing(5)
         image_wrapper.addWidget(image_container, 0)
+        image_wrapper.addWidget(dual_view_container, 0)  # Add dual view container to wrapper
         
         # Zoom button layout
         zoom_layout = QVBoxLayout()
@@ -198,6 +279,12 @@ class AstrorankGUI(QMainWindow):
         self.fit_button.setMaximumWidth(40)
         self.fit_button.clicked.connect(self.fit_image)
         zoom_layout.addWidget(self.fit_button)
+        
+        self.reset_button = QPushButton("Reset")
+        self.reset_button.setFont(small_font)
+        self.reset_button.setMaximumWidth(55)
+        self.reset_button.clicked.connect(self.reset_image_container)
+        zoom_layout.addWidget(self.reset_button)
         
         zoom_layout.addStretch()
         image_wrapper.addLayout(zoom_layout)
@@ -250,18 +337,20 @@ class AstrorankGUI(QMainWindow):
         table_layout.setSpacing(0)  # No spacing
         
         self.table = QTableWidget()
-        self.table.setColumnCount(4)
-        self.table.setHorizontalHeaderLabels(["Filename", "Rank", "Ranked?", "Comments"])
+        self.table.setColumnCount(5)
+        self.table.setHorizontalHeaderLabels(["Filename", "Rank", "Ranked?", "Comments", "WISE?"])
         # Set all columns resizable independently
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Interactive)  # Filename resizable
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Interactive)  # Rank resizable
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Interactive)  # Ranked? resizable
         self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Interactive)  # Comments resizable
+        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.Interactive)  # WISE? resizable
         # Set default column widths
         self.table.setColumnWidth(0, 200)  # Filename column
         self.table.setColumnWidth(1, 45)   # Rank column
         self.table.setColumnWidth(2, 65)   # Ranked? column
         self.table.setColumnWidth(3, 110)  # Comments column
+        self.table.setColumnWidth(4, 60)   # WISE? column
         self.table.setRowCount(len(self.jpg_files))
         self.table.itemClicked.connect(self.on_table_click)
         self.table.setHorizontalScrollMode(1)  # ScrollPerPixel
@@ -294,14 +383,8 @@ class AstrorankGUI(QMainWindow):
         current_file = self.jpg_files[self.current_index]
         image_path = self.image_dir / current_file
         
-        pixmap = QPixmap(str(image_path))
-        if pixmap.isNull():
-            self.image_label.setText("Failed to load image")
-        else:
-            # Scale to fit, maintaining aspect ratio, with zoom applied
-            base_width = int(600 * self.zoom_level)
-            scaled_pixmap = pixmap.scaledToWidth(base_width, Qt.SmoothTransformation)
-            self.image_label.setPixmap(scaled_pixmap)
+        # Use the new display method that handles both single and dual view
+        self.display_wise_view()
         
         # Update image info label with filename and previous ranking
         current_index_display = self.current_index + 1
@@ -322,8 +405,131 @@ class AstrorankGUI(QMainWindow):
         # Set focus to main window so arrow keys work for navigation
         self.setFocus()
         
+        # Reset WISE view state when navigating to new image
+        self.dual_view_active = False
+        self.wise_progress_bar.setVisible(False)
+        self.wise_message_label.setVisible(False)
+        
         # Highlight current row in table
         self.update_table()
+    
+    def open_legacy_survey_viewer(self):
+        """Open Legacy Survey viewer for current image's RA/Dec"""
+        current_file = self.jpg_files[self.current_index]
+        radec = parse_radec_from_filename(current_file)
+        
+        if radec is None:
+            self.show_wise_error("Could not parse RA/Dec from filename")
+            return
+        
+        ra, dec = radec
+        viewer_url = f"https://www.legacysurvey.org/viewer/?ra={ra}&dec={dec}&layer=ls-dr10&zoom=16"
+        webbrowser.open(viewer_url)
+    
+    def toggle_wise_view(self):
+        """Toggle between downloading WISE image or showing dual view"""
+        current_file = self.jpg_files[self.current_index]
+        
+        # If we already have downloaded the WISE image, toggle visibility
+        if current_file in self.wise_images:
+            self.dual_view_active = not self.dual_view_active
+            # Reset dual-view zoom when toggling on
+            if self.dual_view_active:
+                self.dual_view_zoom = 1.0
+                # Show dual-view container, hide single image container
+                self.image_container.setVisible(False)
+                self.dual_view_container.setVisible(True)
+            else:
+                # Show single image container, hide dual-view
+                self.image_container.setVisible(True)
+                self.dual_view_container.setVisible(False)
+            self.display_wise_view()
+        else:
+            # Try to download the WISE image
+            self.download_wise_for_current()
+    
+    def download_wise_for_current(self):
+        """Download WISE image for current image's RA/Dec"""
+        current_file = self.jpg_files[self.current_index]
+        radec = parse_radec_from_filename(current_file)
+        
+        if radec is None:
+            self.show_wise_error("Could not parse RA/Dec from filename")
+            return
+        
+        ra, dec = radec
+        
+        # Show progress bar
+        self.wise_progress_bar.setVisible(True)
+        self.wise_progress_bar.setValue(0)
+        
+        # Create and start download worker thread
+        self.download_worker = WiseDownloadWorker(ra, dec, str(self.wise_output_dir), self.config)
+        self.download_worker.finished.connect(self.on_wise_download_success)
+        self.download_worker.error.connect(self.show_wise_error)
+        self.download_worker.start()
+    
+    def on_wise_download_success(self, image_path):
+        """Handle successful WISE image download"""
+        current_file = self.jpg_files[self.current_index]
+        self.wise_images[current_file] = image_path
+        
+        # Hide progress bar and show success message
+        self.wise_progress_bar.setVisible(False)
+        self.wise_message_label.setVisible(True)
+        self.wise_message_label.setStyleSheet("color: green; font-weight: bold;")
+        self.wise_message_label.setText("✓ WISE")
+        
+        # Show dual view
+        self.dual_view_active = True
+        self.display_wise_view()
+        
+        # Hide message after 5 seconds
+        QTimer.singleShot(5000, lambda: self.wise_message_label.setVisible(False))
+    
+    def show_wise_error(self, error_msg):
+        """Show WISE download error message"""
+        self.wise_progress_bar.setVisible(False)
+        self.wise_message_label.setVisible(True)
+        self.wise_message_label.setStyleSheet("color: red; font-weight: bold;")
+        self.wise_message_label.setText(f"⚠ {error_msg}")
+    
+    def display_wise_view(self):
+        """Display WISE image alongside original or just original"""
+        current_file = self.jpg_files[self.current_index]
+        image_path = self.image_dir / current_file
+        
+        if self.dual_view_active and current_file in self.wise_images:
+            # Load both images in separate containers
+            pixmap1 = QPixmap(str(image_path))
+            pixmap2 = QPixmap(self.wise_images[current_file])
+            
+            if not pixmap1.isNull() and not pixmap2.isNull():
+                # Calculate width for each image (equal size side-by-side)
+                # Each image gets half the container width minus spacing
+                container_width = self.dual_view_container.width()
+                width_per_image = int((container_width - 30) / 2)  # 30px for spacing/margins
+                
+                # Scale both images by the same zoom level
+                scaled_width = int(width_per_image * self.dual_view_zoom)
+                scaled1 = pixmap1.scaledToWidth(scaled_width, Qt.SmoothTransformation)
+                scaled2 = pixmap2.scaledToWidth(scaled_width, Qt.SmoothTransformation)
+                
+                # Display in separate labels
+                self.dual_image_label_1.setPixmap(scaled1)
+                self.dual_image_label_2.setPixmap(scaled2)
+            else:
+                self.dual_image_label_1.setText("Failed to load original")
+                self.dual_image_label_2.setText("Failed to load WISE")
+        else:
+            # Just show original image in single container
+            pixmap = QPixmap(str(image_path))
+            if pixmap.isNull():
+                self.image_label.setText("Failed to load image")
+            else:
+                base_width = int(600 * self.zoom_level)
+                scaled_pixmap = pixmap.scaledToWidth(base_width, Qt.SmoothTransformation)
+                self.image_label.setPixmap(scaled_pixmap)
     
     def update_table(self):
         """Update the rankings table - only update changed rows for speed"""
@@ -334,7 +540,7 @@ class AstrorankGUI(QMainWindow):
             # Initialize all row backgrounds on first call
             default_bg = QColor(30, 30, 30) if self.dark_mode else QColor(255, 255, 255)
             for i in range(len(self.jpg_files)):
-                for j in range(4):
+                for j in range(5):
                     if self.table.item(i, j) is None:
                         self.table.setItem(i, j, QTableWidgetItem())
                     self.table.item(i, j).setBackground(default_bg)
@@ -371,14 +577,19 @@ class AstrorankGUI(QMainWindow):
             comment_item = QTableWidgetItem(comment_text)
             self.table.setItem(i, 3, comment_item)
             
+            # WISE? (checkmark if WISE image downloaded)
+            wise_item = QTableWidgetItem("✓" if filename in self.wise_images else "")
+            wise_item.setTextAlignment(Qt.AlignCenter)
+            self.table.setItem(i, 4, wise_item)
+            
             # Highlight current row, unhighlight previous
             if i == self.current_index:
                 highlight_color = QColor(70, 120, 180) if self.dark_mode else QColor(173, 216, 230)
-                for j in range(4):
+                for j in range(5):
                     self.table.item(i, j).setBackground(highlight_color)
             else:
                 bg_color = QColor(30, 30, 30) if self.dark_mode else QColor(255, 255, 255)
-                for j in range(4):
+                for j in range(5):
                     self.table.item(i, j).setBackground(bg_color)
         
         # Force table repaint
@@ -587,17 +798,51 @@ class AstrorankGUI(QMainWindow):
     
     def zoom_in(self):
         """Increase image zoom by 10%"""
-        self.zoom_level *= 1.1
+        # If in dual-view, zoom the individual images; otherwise zoom container
+        if self.dual_view_active:
+            self.dual_view_zoom *= 1.1
+        else:
+            self.zoom_level *= 1.1
+            # Allow container to expand up to 1400x1400 for zoomed views
+            if self.zoom_level > 1.0:
+                expanded_size = int(680 * self.zoom_level)
+                expanded_size = min(expanded_size, 1400)  # Cap at 1400
+                self.image_container.setMaximumHeight(expanded_size)
+                self.image_container.setMaximumWidth(expanded_size)
         self.display_image()
     
     def zoom_out(self):
         """Decrease image zoom by 10%"""
-        self.zoom_level /= 1.1
+        # If in dual-view, zoom the individual images; otherwise zoom container
+        if self.dual_view_active:
+            self.dual_view_zoom /= 1.1
+        else:
+            self.zoom_level /= 1.1
+            # Shrink container back if zoom level allows
+            if self.zoom_level <= 1.0:
+                self.image_container.setMaximumHeight(self.original_container_height)
+                self.image_container.setMaximumWidth(self.original_container_width)
+            else:
+                expanded_size = int(680 * self.zoom_level)
+                expanded_size = min(expanded_size, 1400)
+                self.image_container.setMaximumHeight(expanded_size)
+                self.image_container.setMaximumWidth(expanded_size)
         self.display_image()
     
     def fit_image(self):
         """Fit the image to the image container"""
+        if self.dual_view_active:
+            self.dual_view_zoom = 1.0
+        else:
+            self.zoom_level = 1.0
+        self.display_image()
+    
+    def reset_image_container(self):
+        """Reset the image container to its original size"""
+        self.image_container.setMaximumHeight(self.original_container_height)
+        self.image_container.setMaximumWidth(self.original_container_width)
         self.zoom_level = 1.0
+        self.dual_view_zoom = 1.0
         self.display_image()
     
     def toggle_helper(self):
@@ -676,6 +921,10 @@ class AstrorankGUI(QMainWindow):
         elif key == Qt.Key_F:
             self.fit_image()
         
+        # Reset container on R or r
+        elif key == Qt.Key_R:
+            self.reset_image_container()
+        
         # Toggle helper on ? (Shift+/)
         elif key == Qt.Key_Question:
             self.toggle_helper()
@@ -691,6 +940,15 @@ class AstrorankGUI(QMainWindow):
         # Comment on K or k
         elif key == Qt.Key_K:
             self.open_comment_dialog()
+        
+        # WISE download on G or g
+        elif key == Qt.Key_G:
+            if self.wise_enabled:
+                self.toggle_wise_view()
+        
+        # Open Legacy Survey viewer on B or b
+        elif key == Qt.Key_B:
+            self.open_legacy_survey_viewer()
         
         # Zoom on + and -
         elif key == Qt.Key_Plus or key == Qt.Key_Equal:  # Equal is unshifted +
@@ -831,11 +1089,21 @@ class HelperDialog(QDialog):
 • Double-click a comment in the list to edit it<br>
 <br>
 
+<b>WISE Downloads:</b><br>
+• <b>G</b> - Download WISE unwise neo11 image for current coordinates (if enabled)<br>
+• Press <b>G</b> again to toggle between single and dual view<br>
+<br>
+
+<b>Legacy Survey:</b><br>
+• <b>B</b> - Open Legacy Survey viewer for current image coordinates<br>
+<br>
+
 <b>Display:</b><br>
 • <b>L</b> - Toggle image list panel visibility<br>
 • <b>D</b> - Toggle dark mode<br>
-• <b>+</b> / <b>−</b> - Zoom image in/out (incremental)<br>
 • <b>F</b> - Fit image to container (reset zoom)<br>
+• <b>R</b> - Reset image container to original size<br>
+• <b>+</b> / <b>−</b> - Zoom image in/out (incremental)<br>
 • <b>?</b> - Show/hide this helper window<br>
 <br>
 

@@ -82,9 +82,12 @@ astrorank /path/to/images/directory -o my_rankings.txt # Resumes the session for
 | **Shift + Right Arrow** | Skip to next unranked image (or submit rank first) |
 | **C** | Clear the rank for current image |
 | **F** | Fit image to container (reset zoom) |
+| **R** | Reset image container to original size |
 | **L** | Toggle list panel visibility |
 | **D** | Toggle dark/light mode |
 | **K** | Open comment dialog for current image |
+| **G** | Download WISE unwise neo7 image (press again to toggle dual view) |
+| **B** | Open Legacy Survey viewer for current coordinates |
 | **+** / **−** | Zoom image in/out |
 | **?** | Show/hide keyboard shortcuts helper |
 | **Q** | Quit the application |
@@ -94,10 +97,10 @@ astrorank /path/to/images/directory -o my_rankings.txt # Resumes the session for
 ## Some Notes about the Interface
 
 - **Image Viewer**: Display of current active image with filename and previous ranking (if any) shown above in parentheses
-- **Zoom Controls**: Click the + and − buttons to adjust image size; "Fit" button to reset to default size
+- **Zoom Controls**: Click the + and − buttons to adjust image size and expand container; "Fit" button to reset zoom to default; "Reset" button to return container to original size
 - **Rank Input**: Text field for entering ranks (0-3)
 - **Navigation Buttons**: Previous, Next, Skip to Next Unranked, and Hide/Show List - can use these instead of keys
-- **Image List Panel**: Shows all images with filenames, ranks, and ranking status (toggle visibility with `L` key)
+- **Image List Panel**: Shows all images with filenames, ranks, ranking status, and WISE download status (toggle visibility with `L` key)
 
 ---
 
