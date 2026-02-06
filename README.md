@@ -1,4 +1,4 @@
-# <img src="logo/astrorank_logo.png" alt="astrorank Logo" width="140">&nbsp;&nbsp;AstroRank — Image Ranking Tool
+# <img src="logo/astrorank_logo.png" alt="astrorank Logo" width="140">&nbsp;&nbsp;AstroRank <span style="font-size: 0.6em; font-weight: normal;">An Image Ranking Tool for Astronomical Images</span>
 
 ![PyQt5](https://img.shields.io/badge/PyQt5-5.15+-blue)
 
