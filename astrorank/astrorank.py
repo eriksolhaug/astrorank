@@ -90,7 +90,7 @@ class CommentDialog(QDialog):
 
 
 class AstrorankGUI(QMainWindow):
-    def __init__(self, image_dir, output_file="rankings.txt"):
+    def __init__(self, image_dir, output_file="rankings.txt", config_file="config.json"):
         super().__init__()
         
         self.image_dir = Path(image_dir)
@@ -109,7 +109,7 @@ class AstrorankGUI(QMainWindow):
         self.original_container_height = 680  # Original container height for reset
         
         # Secondary image download functionality (configurable survey)
-        self.config = load_config()
+        self.config = load_config(config_file)
         secondary_config = self.config.get("secondary_download", {})
         self.secondary_enabled = secondary_config.get("enabled", True)
         self.secondary_name = secondary_config.get("name", "Secondary")
@@ -1187,6 +1187,7 @@ def main():
 Examples:
   astrorank /path/to/images
   astrorank /path/to/images -o my_rankings.txt
+  astrorank /path/to/images -c /path/to/config.json
         """
     )
     
@@ -1199,6 +1200,12 @@ Examples:
         "-o", "--output",
         default="rankings.txt",
         help="Output file for rankings (default: rankings.txt)"
+    )
+    
+    parser.add_argument(
+        "-c", "--config",
+        default="config.json",
+        help="Configuration file path (default: config.json)"
     )
     
     args = parser.parse_args()
@@ -1220,7 +1227,8 @@ Examples:
         
         gui = AstrorankGUI(
             image_dir=str(image_dir),
-            output_file=args.output
+            output_file=args.output,
+            config_file=args.config
         )
         gui.show()
         sys.exit(app.exec_())

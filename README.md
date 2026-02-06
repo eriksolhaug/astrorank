@@ -89,9 +89,9 @@ To use a different astronomical survey for the dual-panel view (press **G** to t
 }
 ```
 
-**Key parameters:**
-- `{ra}` and `{dec}` are automatically replaced with coordinates parsed from your image filenames
-- `zoom=15` controls the zoom level in the viewer (adjust as needed; higher values = more zoom)
+**Parameters:**
+- `{ra}` and `{dec}` in the `url_template` are automatically replaced with coordinates parsed from your image filenames
+- `zoom=15` in the `url_template` controls the zoom level in the viewer (adjust as needed; higher values = more zoom)
 - `name` is used for UI labels and output directory naming
 - Works on Windows, macOS, and Linux
 
