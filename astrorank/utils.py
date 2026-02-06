@@ -189,7 +189,7 @@ def load_config(config_file: str = "config.json") -> Dict:
     Load configuration from config.json
     
     Args:
-        config_file: Path to config.json file
+        config_file: Path to config.json file. If relative, searches in current dir, then in package directory
         
     Returns:
         Dictionary with configuration, or defaults if file not found
@@ -200,19 +200,40 @@ def load_config(config_file: str = "config.json") -> Dict:
             "name": "WISE",
             "url_template": "https://www.legacysurvey.org/viewer/decals-unwise-neo11/{ra}/{dec}?layer=unwise-neo1&zoom=15",
             "image_url_template": "https://www.legacysurvey.org/data/unwise/neo11/unwise-{ra}-{dec}-{band}.jpg"
+        },
+        "ranks": {
+            "0": 0,
+            "1": 1,
+            "2": 2,
+            "3": 3,
+            "backtick": 0
         }
     }
     
-    if not os.path.exists(config_file):
-        return default_config
+    # Try current working directory first
+    if os.path.exists(config_file):
+        try:
+            with open(config_file, 'r') as f:
+                config = json.load(f)
+                return config
+        except Exception as e:
+            print(f"Error loading config from {config_file}: {e}")
+            return default_config
     
-    try:
-        with open(config_file, 'r') as f:
-            config = json.load(f)
-            return config
-    except Exception as e:
-        print(f"Error loading config: {e}")
-        return default_config
+    # Try package directory if relative path
+    if not os.path.isabs(config_file):
+        package_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        package_config = os.path.join(package_dir, config_file)
+        if os.path.exists(package_config):
+            try:
+                with open(package_config, 'r') as f:
+                    config = json.load(f)
+                    return config
+            except Exception as e:
+                print(f"Error loading config from {package_config}: {e}")
+                return default_config
+    
+    return default_config
 
 
 def download_secondary_image(ra: float, dec: float, output_dir: str, config: Dict) -> Optional[str]:
