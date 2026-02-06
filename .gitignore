@@ -13,3 +13,5 @@ build/
 .coverage
 htmlcov/
 rankings.txt
+rankings_comments.txt
+test/

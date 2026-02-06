@@ -1,8 +1,8 @@
-# astrorank — Image Ranking Tool
+# ![astrorank logo](logo/astrorank_logo.png?raw=true&height=40) astrorank — Image Ranking Tool
 
 ![PyQt5](https://img.shields.io/badge/PyQt5-5.15+-blue)
 
-`astrorank` is a PyQt5-based GUI application for efficiently ranking astronomical images. It provides an intuitive interface for browsing and ranking `.jpg` images on a scale of 0-3, with keyboard shortcuts optimized for fast workflow.
+`astrorank` is a PyQt5-based GUI application for efficiently ranking astronomical images. It provides an interface for browsing and ranking `.jpg` images on a scale of 0-3, with keyboard shortcuts optimized for a fast workflow.
 
 ---
 
@@ -41,26 +41,54 @@
 4. **Run astrorank:**
 
    ```bash
-   imrank </path/to/images/directory>
+   astrorank </path/to/images/directory>
    ```
+
+### macOS App Bundle (Optional)
+
+To create a proper macOS app bundle with the app icon showing in the dock:
+
+1. **Install py2app:**
+
+   ```bash
+   conda activate astrorank
+   pip install py2app
+   ```
+
+2. **Build the app bundle:**
+
+   ```bash
+   cd ~/Research/Tools/astrorank
+   python setup_mac.py py2app
+   ```
+
+3. **Run the app:**
+
+   ```bash
+   open dist/astrorank.app
+   ```
+
+The app bundle will be created in `dist/astrorank.app` with the custom icon showing in the macOS dock.
 
 ---
 
-## How to Use ImRank?
+## How to Use AstroRank?
 
 ### Basic Usage
 
 ```bash
-imrank </path/to/images/directory> #This starts the GUI and looks for all `.jpg` files in the directory. Rankings are saved to `rankings.txt` by default.
-imrank /path/to/images/directory -o my_rankings.txt # Specifies custom output file
+astrorank /path/to/images/directory # This starts the GUI and looks for all `.jpg` files in the directory. Rankings are saved to `rankings.txt` by default.
+astrorank /path/to/images/directory -o my_rankings.txt # Specifies custom output file
+```
 
 ### Resume Previous Session
 
-```bash
-imrank /path/to/images/directory -o my_rankings.txt -c # Resume previous session
-```
+Running the code specifying an already existing rank file will allow you to resume that previous session.
 
-This starts with the first unranked image from your previous session and keeps all rankings.
+```bash
+astrorank /path/to/images/directory # Resumes the session for rankings.txt (default output file name) if previously run
+astrorank /path/to/images/directory -o my_rankings.txt # Resumes the session for my_rankings.txt if previously run
+```
 
 ---
 
@@ -71,6 +99,7 @@ This starts with the first unranked image from your previous session and keeps a
 | Key | Action |
 |-----|--------|
 | **0-3** | Fill the rank input field (0=worst, 3=best) |
+| **` (backtick)** | Also works as rank 0 (added as an option to shorten the distance from the 0-3 keys) |
 | **Enter/Return** | Submit current rank and move to next image |
 | **Delete/Backspace** | Clear the rank input field |
 | **Left/Up Arrow** | Go to previous image. Submit rank if entered |
@@ -80,6 +109,8 @@ This starts with the first unranked image from your previous session and keeps a
 | **C** | Clear the rank for current image |
 | **F** | Fit image to container (reset zoom) |
 | **L** | Toggle list panel visibility |
+| **D** | Toggle dark/light mode |
+| **K** | Open comment dialog for current image |
 | **+** / **−** | Zoom image in/out |
 | **?** | Show/hide keyboard shortcuts helper |
 | **Q** | Quit the application |
