@@ -64,7 +64,7 @@ astrorank /path/to/images/directory -o my_rankings.txt # Specifies custom output
 
 ### Image Filename Format
 
-For AstroRank to work with the browser (press **B**) and secondary image download features (press **G**), your image filenames must follow this format:
+For AstroRank to work with the browser (press `b`) and secondary image download features (press `g`), your image filenames must follow this format:
 
 ```
 <any_name>_<ra>_<dec>.jpg
@@ -76,7 +76,7 @@ Where `<ra>` and `<dec>` are the right ascension and declination in **decimal de
 
 ### Output Files
 
-When downloading secondary images (press **G**), they are saved as:
+When downloading secondary images (press `g`), they are saved as:
 
 ```
 <survey_name>_<ra>_<dec>.jpg
@@ -103,14 +103,14 @@ AstroRank uses a `config.json` file to customize keyboard shortcuts, ranking sca
 
 The configuration supports two main sections for URL-based features:
 
-**Browser Section** - for opening survey viewers (press **B**):
+**Browser Section** - for opening survey viewers (press `b`):
 ```json
 "browser": {
   "url_template": "https://www.legacysurvey.org/viewer/?ra={ra}&dec={dec}&layer=ls-dr10&zoom=16"
 }
 ```
 
-**Secondary Download Section** - for downloading and compositing FITS images (press **G**):
+**Secondary Download Section** - for downloading and compositing FITS images (press `g`):
 ```json
 "secondary_download": {
   "enabled": true,
@@ -162,7 +162,7 @@ This is useful for maintaining different configurations for different projects o
 
 ### Custom Ranking Scale
 
-By default, AstroRank uses ranks 0-3 with keys 0, 1, 2, 3, and backtick (`) which map to rank 0. To use a different scale or custom keys, **edit the `config.json` file** in the astrorank package directory and modify the `ranks` section:
+By default, AstroRank uses ranks 0-3 with keys 0, 1, 2, 3, and backtick (\`) which map to rank 0. To use a different scale or custom keys, **edit the `config.json` file** in the astrorank package directory and modify the `ranks` section:
 
 ```json
 "ranks": {
@@ -255,17 +255,17 @@ Multiple keys can be assigned to the same action using commas (e.g., `"quit": "q
 | **Right/Down Arrow** | Go to next image. Submit rank if entered |
 | **Shift + Left Arrow** | Jump to the first image |
 | **Shift + Right Arrow** | Skip to next unranked image (or submit rank first) |
-| **C** | Clear the rank for current image |
-| **F** | Fit image to container (reset zoom) |
-| **R** | Reset image container to original size |
-| **L** | Toggle list panel visibility |
-| **D** | Toggle dark/light mode |
-| **K** | Open comment dialog for current image |
-| **G** | Download WISE unwise neo7 image (press again to toggle dual view) |
-| **B** | Open Legacy Survey viewer for current coordinates |
+| `c` | Clear the rank for current image |
+| `f` | Fit image to container (reset zoom) |
+| `r` | Reset image container to original size |
+| `l` | Toggle list panel visibility |
+| `d` | Toggle dark/light mode |
+| `k` | Open comment dialog for current image |
+| `g` | Download WISE unwise neo7 image (press again to toggle dual view) |
+| `b` | Open Legacy Survey viewer for current coordinates |
 | **+** / **−** | Zoom image in/out |
-| **?** | Show/hide keyboard shortcuts helper |
-| **Q** | Quit the application |
+| `?` | Show/hide keyboard shortcuts helper |
+| `q` | Quit the application |
 
 ---
 
