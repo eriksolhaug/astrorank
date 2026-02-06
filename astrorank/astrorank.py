@@ -971,6 +971,10 @@ class AstrorankGUI(QMainWindow):
         """Handle keyboard events using configurable keys from config.json"""
         key = event.key()
         
+        # Check rank keys first (from config.json "ranks" section)
+        if self._check_rank_key(event):
+            return  # Rank key was handled
+        
         # Check each action against configured keys
         if self._key_matches_action(event, 'clear_input'):
             self.rank_input.clear()
@@ -999,17 +1003,6 @@ class AstrorankGUI(QMainWindow):
             self.zoom_in()
         elif self._key_matches_action(event, 'zoom_out'):
             self.zoom_out()
-        elif self._key_matches_action(event, 'rank_0'):
-            self.rank_input.setText("0")
-        elif self._key_matches_action(event, 'rank_1'):
-            self.rank_input.setText("1")
-        elif self._key_matches_action(event, 'rank_2'):
-            self.rank_input.setText("2")
-        elif self._key_matches_action(event, 'rank_3'):
-            self.rank_input.setText("3")
-        elif self._check_rank_key(event):
-            # Check if the key matches any configured rank
-            pass  # _check_rank_key handles the input directly
         elif self._key_matches_action(event, 'submit_and_next'):
             self.submit_rank()
             self.go_next()
