@@ -109,7 +109,7 @@ Example: If your survey has a single 2D FITS extension instead of a 3D array, yo
 
 ### Custom Ranking Scale
 
-By default, AstroRank uses ranks 0-3. To use a different scale (e.g., 1-5, 0-6, or custom values), modify the `ranks` section:
+By default, AstroRank uses ranks 0-3 with keys 0, 1, 2, 3, and backtick (`) which map to rank 0. To use a different scale or custom keys, **edit the `config.json` file** in the astrorank package directory and modify the `ranks` section:
 
 ```json
 "ranks": {
@@ -153,7 +153,10 @@ Or use the keys as the rank values themselves:
 }
 ```
 
-**Important:** Ensure rank keys do not overlap with any other key functionalities defined in the `keys` section (e.g., don't use 'q' as a rank if 'q' is your quit key). It is the user's responsibility to avoid these conflicts.
+**Important:** 
+- Ensure rank keys do not overlap with any other key functionalities defined in the `keys` section (e.g., don't use 'q' as a rank if 'q' is your quit key). It is the user's responsibility to avoid these conflicts.
+- After editing `config.json`, restart astrorank for changes to take effect
+- Use `-c` flag to load a custom config: `astrorank /path/to/images -c /path/to/custom_config.json`
 
 The UI will automatically update to show "Rank (min-max):" based on your configured values.
 
