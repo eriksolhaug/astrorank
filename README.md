@@ -162,7 +162,7 @@ The config has its own section to specify a secondary directory to look for imag
 ```json
 "secondary_dir": {
   "enabled": false,
-  "path": "/path/to/secondary/directory"
+  "path": "PATH_TO_SECONDARY_DIRECTORY"
 }
 ```
 
