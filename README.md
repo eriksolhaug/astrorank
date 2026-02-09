@@ -128,16 +128,6 @@ The configuration supports two main sections for URL-based features:
 }
 ```
 
-**Secondary Directory Section** - for toggling between images from primary and secondary directories (press `e`):
-```json
-"secondary_dir": {
-  "enabled": false,
-  "path": "/path/to/secondary/directory"
-}
-```
-
-When enabled, the secondary directory should contain images with the same filenames as the primary directory. Press `e` to toggle between displaying images from the primary and secondary directories.
-
 **Parameters:**
 - `{ra}` and `{dec}` placeholders are automatically replaced with coordinates parsed from your image filenames
 - `url_template_download`: The URL template for downloading FITS files. Supports `{ra}` and `{dec}` substitution
@@ -163,6 +153,22 @@ When enabled, the secondary directory should contain images with the same filena
 ```
 
 This approach makes the system fully configurable - different surveys can be used by simply changing the configuration, no code modification needed.
+
+## Displaying Images with the Same Name from Two Separate Directories
+
+The config has its own section to specify a secondary directory to look for images of the same file name as in the primary directory (the one specified in the command-line). When enabled, you can toggle back and forth between images from the two directories.
+
+**Secondary Directory Section** - for toggling between images from primary and secondary directories (press `e`):
+```json
+"secondary_dir": {
+  "enabled": false,
+  "path": "/path/to/secondary/directory"
+}
+```
+
+When enabled, the secondary directory should contain images with the same filenames as the primary directory. Press `e` to toggle between displaying images from the primary and secondary directories.
+
+
 
 ### Loading a Custom Configuration File
 
