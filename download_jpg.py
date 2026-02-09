@@ -161,10 +161,10 @@ def process_sources(csv_file, output_dir="examples/", prefix="download_", skip_f
         
         # Determine column indices
         if skip_first_column:
-            # Skip first column (ID), use columns 1 and 2
+            # Skip first column (ID), use columns 1 and 2 as RA and DEC, column 0 as name
             ra_col, dec_col, name_col = 1, 2, 0
         else:
-            # Default: use columns 0 and 1 as RA and DEC
+            # Default: use columns 0 and 1 as RA and DEC, no name column
             ra_col, dec_col, name_col = 0, 1, None
         
         for row_idx, row in enumerate(reader):

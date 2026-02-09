@@ -9,7 +9,7 @@
 ![astropy](https://img.shields.io/badge/astropy-5.0%2B-red)
 ![requests](https://img.shields.io/badge/requests-2.20%2B-orange)
 
-`astrorank` is a PyQt5-based GUI application for efficiently ranking astronomical images. It was inspired by Aidan Cloonan's original `lensranker` tool (an earlier version may have existed) developed for the COOL-LAMPS collaboration. `astrorank` allows the user to provide an interface for browsing and ranking `.jpg` images on a scale of 0-3, with keyboard shortcuts optimized for a fast workflow.
+`astrorank` is a PyQt5-based GUI application for efficiently ranking astronomical images. This software allows the user to provide an interface for browsing and ranking `.jpg` images on a scale of 0-3, with keyboard shortcuts optimized for a fast workflow.
 
 ---
 
@@ -33,8 +33,9 @@
 
 2. **Clone the repository:**
 
+   First, enter (`cd` into) a directory you want to place the astrorank code, e.g. `~/Research/Tools/`.
+
    ```bash
-   cd ~/Research/Tools
    git clone https://github.com/eriksolhaug/astrorank.git
    cd astrorank
    ```
@@ -48,7 +49,7 @@
 4. **Run astrorank:**
 
    ```bash
-   astrorank </path/to/images/directory>
+   astrorank YOUR_IMAGE_DIRECTORY
    ```
 
 ---
@@ -58,8 +59,10 @@
 ### Basic Usage
 
 ```bash
-astrorank /path/to/images/directory # This starts the GUI and looks for all `.jpg` files in the directory. Rankings are saved to `rankings.txt` by default.
-astrorank /path/to/images/directory -o my_rankings.txt # Specifies custom output file
+astrorank YOUR_IMAGE_DIRECTORY # This starts the GUI and looks for all `.jpg` files in the directory. Rankings are saved to `rankings.txt` by default.
+astrorank YOUR_IMAGE_DIRECTORY -o my_rankings.txt # Specifies custom output file
+
+Example: astrorank ~/Research/Tools/astrorank/images
 ```
 
 ### Image Filename Format
@@ -76,7 +79,7 @@ Where `<ra>` and `<dec>` are the right ascension and declination in **decimal de
 
 ### Output Files
 
-`astrorank` produces a `rankings.txt` file containing the file name and rank for the given file. If any comments are created, these will be included as a third column in a separate file `rankings_comments.txt`. You can change the output name using the `-o` flag (see above). E.g. running `astrorank /path/to/images/directory -o my_rankings.txt` will produce both a `my_rankings.txt` and a `my_rankings_comments.txt` file.
+`astrorank` produces a `rankings.txt` file containing the file name and rank for the given file. If any comments are created, these will be included as a third column in a separate file `rankings_comments.txt`. You can change the output name using the `-o` flag (see above). E.g. running `astrorank </path/to/images/directory> -o my_rankings.txt` will produce both a `my_rankings.txt` and a `my_rankings_comments.txt` file.
 
 When downloading secondary images (press `g`), they are saved as:
 
@@ -91,8 +94,8 @@ When downloading secondary images (press `g`), they are saved as:
 Running the code specifying an already existing rank file will allow you to resume that previous session.
 
 ```bash
-astrorank /path/to/images/directory # Resumes the session for rankings.txt (default output file name) if previously run
-astrorank /path/to/images/directory -o my_rankings.txt # Resumes the session for my_rankings.txt if previously run
+astrorank YOUR_IMAGE_DIRECTORY # Resumes the session for rankings.txt (default output file name) if previously run
+astrorank YOUR_IMAGE_DIRECTORY -o my_rankings.txt # Resumes the session for my_rankings.txt if previously run
 ```
 
 ---
@@ -156,8 +159,10 @@ This approach makes the system fully configurable - different surveys can be use
 By default, AstroRank loads `config.json` from the current working directory, or falls back to the package installation directory. To use a custom configuration file, use the `-c` or `--config` flag:
 
 ```bash
-astrorank /path/to/images -c /path/to/custom_config.json
-astrorank /path/to/images --config /path/to/custom_config.json
+astrorank YOUR_IMAGE_DIRECTORY -c custom_config.json
+astrorank YOUR_IMAGE_DIRECTORY --config custom_config.json
+
+Example: astrorank ~/Research/Tools/astrorank/images -c ~/Research/Tools/astrorank/config_galex.json
 ```
 
 This is useful for maintaining different configurations for different projects or surveys.
@@ -303,11 +308,17 @@ Each line contains a filename and its rank (0-3).
 To modify or extend the code:
 
 ```bash
-cd ~/Research/Tools/astrorank
+cd YOUR_ASTRORANK_DIRECTORY
 conda create -n astrorank-dev python=3.10
 conda activate astrorank-dev
 pip install -e .
 ```
+
+---
+
+## Acknowledgments
+
+`astrorank` was inspired by Aidan Cloonan's `lensranker` tool (an earlier version may have existed) developed for the COOL-LAMPS collaboration.
 
 ---
 
