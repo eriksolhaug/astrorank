@@ -106,13 +106,22 @@ AstroRank uses a `config.json` file to customize keyboard shortcuts, ranking sca
 
 ### Survey and Browser Configuration
 
-The configuration supports two main sections for URL-based features:
+The configuration supports three sections for URL-based features:
 
 **Browser Section** - for opening survey viewers (press `b`):
 ```json
 "browser": {
-  "url_template": "https://www.legacysurvey.org/viewer/?ra={ra}&dec={dec}&layer=ls-dr10&zoom=16"
+   "enabled": true,
+   "url_template": "https://www.legacysurvey.org/viewer/?ra={ra}&dec={dec}&layer=ls-dr10&zoom=16"
 }
+```
+
+**NED Search Section** - for opening a NED search around the given coordinates with default search radius of 1 arcminute (press `n`):
+```json
+"ned_search": {
+   "enabled": true,
+   "url_template": "https://ned.ipac.caltech.edu/conesearch?search_type=Near%20Position%20Search&in_csys=Equatorial&in_equinox=J2000&ra={ra}&dec={dec}&radius=1&Z_CONSTRAINT=Unconstrained"
+  }
 ```
 
 **Secondary Download Section** - for downloading and compositing FITS images (press `g`):
@@ -128,7 +137,7 @@ The configuration supports two main sections for URL-based features:
 }
 ```
 
-**Parameters:**
+**Parameters for the Secondary Download Section:**
 - `{ra}` and `{dec}` placeholders are automatically replaced with coordinates parsed from your image filenames
 - `url_template_download`: The URL template for downloading FITS files. Supports `{ra}` and `{dec}` substitution
 - `extensions`: Maps FITS layer indices to RGB channels. Each layer can map to one or more channels:
@@ -152,7 +161,7 @@ The configuration supports two main sections for URL-based features:
 }
 ```
 
-This approach makes the system fully configurable - different surveys can be used by simply changing the configuration, no code modification needed.
+You can change the survey url's to match the desired survey. This approach makes the system fully configurable - different surveys can be used by simply changing the configuration, no code modification needed. You may disable any of the features above by setting `enabled` to `false` (note that `.json` used lower case `True` and `False` booleans). Example `config_EXAMPLE.json` files have been included in the `astrorank` distribution.
 
 ## Displaying Images with the Same Name from Two Separate Directories
 
