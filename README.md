@@ -67,19 +67,19 @@ Example: astrorank ~/Research/Tools/astrorank/examples
 
 ### Image Filename Format
 
-For AstroRank to work with the browser (press `b`) and secondary image download features (press `g`), your image filenames must follow this format:
+`astrorank` can read any .jpg files, and the file name does not need a specific format for the software to work. However, for `astrorank` to work with the browser (press `b`) and secondary image download (press `g`) features enabled, your image filenames must follow this format:
 
 ```
 <any_name>_<ra>_<dec>.jpg
 ```
 
-Where `<ra>` and `<dec>` are the right ascension and declination in **decimal degrees**.
+Where `<ra>` and `<dec>` are the right ascension and declination in **decimal degrees**. This is so that `astrorank` can obtain the RA and DEC of the image and use this to query the field online.
 
 **Example:** `qso_aug_aug21_2025A_run1_100.00371_-69.056759.jpg`
 
 ### Output Files
 
-`astrorank` produces a `rankings.txt` file containing the file name and rank for the given file. If any comments are created, these will be included as a third column in a separate file `rankings_comments.txt`. You can change the output name using the `-o` flag (see above). E.g. running `astrorank </path/to/images/directory> -o my_rankings.txt` will produce both a `my_rankings.txt` and a `my_rankings_comments.txt` file.
+`astrorank` produces a `rankings.txt` file containing the file name and rank for the given file. If any comments are created, these will be included as a third column in a separate file `rankings_comments.txt`. You can change the output name using the `-o` flag (see above). E.g. running `astrorank PATH_TO_IMAGES -o my_rankings.txt` will produce both a `my_rankings.txt` and a `my_rankings_comments.txt` file.
 
 When downloading secondary images (press `g`), they are saved as:
 
