@@ -288,6 +288,7 @@ Multiple keys can be assigned to the same action using commas (e.g., `"quit": "q
 | `e` | Toggle images from the secondary directory that are already downloaded (when enabled in the config) |
 | `g` | Download secondary images (when enabled in the config). E.g. WISE unwise neo11 image (press again to toggle dual view) |
 | `b` | Open Legacy Survey viewer for current coordinates (when enabled in the config) |
+| `n` | Open NED search in a browser for current coordinates (when enabled in the config) |
 | `+` / `−` | Zoom image in/out |
 | `?` | Show/hide keyboard shortcuts helper |
 | `q` | Quit the application |

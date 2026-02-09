@@ -133,6 +133,10 @@ class AstrorankGUI(QMainWindow):
         # Browser functionality (configurable)
         browser_config = self.config.get("browser", {})
         self.browser_enabled = browser_config.get("enabled", True)
+
+        # NED search functionality (configurable)
+        ned_search_config = self.config.get("ned_search", {})
+        self.ned_search_enabled = ned_search_config.get("enabled", True)
         
         # Secondary directory functionality (configurable)
         secondary_dir_config = self.config.get("secondary_dir", {})
@@ -505,6 +509,24 @@ class AstrorankGUI(QMainWindow):
         ra, dec = radec
         viewer_url = f"https://www.legacysurvey.org/viewer/?ra={ra}&dec={dec}&layer=ls-dr10&zoom=16"
         webbrowser.open(viewer_url)
+
+    def open_ned_search(self):
+        """Open NED search for current image's RA/Dec"""
+        if not self.ned_search_enabled:
+            self.show_wise_error("NED search functionality is disabled in config")
+            return
+        current_file = self.jpg_files[self.current_index]
+        radec = parse_radec_from_filename(current_file)
+        if radec is None:
+            self.show_wise_error("Could not parse RA/Dec from filename")
+            return
+        ra, dec = radec
+        # NED expects RA in sexagesimal format, so convert it
+        ra_str = f"{int(ra // 15)}h{int((ra % 15) * 4)}m{((ra % 15) * 4 - int((ra % 15) * 4)) * 60:.2f}s"
+        dec_str = f"{'+' if dec >= 0 else '-'}{int(abs(dec))}d{int((abs(dec) % 1) * 60)}m{((abs(dec) % 1) * 60 - int((abs(dec) % 1) * 60)) * 60:.2f}s"
+        ned_url = f"https://ned.ipac.caltech.edu/conesearch?search_type=Near%20Position%20Search&in_csys=Equatorial&in_equinox=J2000&ra={ra_str}&dec={dec_str}&radius=1&Z_CONSTRAINT=Unconstrained"
+        webbrowser.open(ned_url)     
+        return
     
     def toggle_wise_view(self):
         """Toggle between downloading secondary image or showing dual view"""
@@ -1079,6 +1101,8 @@ class AstrorankGUI(QMainWindow):
                 self.toggle_wise_view()
         elif self._key_matches_action(event, 'legacy_survey'):
             self.open_legacy_survey_viewer()
+        elif self._key_matches_action(event, 'ned_search'):
+            self.open_ned_search()
         elif self._key_matches_action(event, 'toggle_secondary_dir'):
             self.toggle_secondary_dir()
         elif self._key_matches_action(event, 'zoom_in'):
@@ -1233,6 +1257,10 @@ class HelperDialog(QDialog):
 
 <b>Legacy Survey:</b><br>
 • <b>B</b> - Open Legacy Survey viewer for current image coordinates<br>
+<br>
+
+<b>NED Search:</b><br>
+• <b>N</b> - Open NED search for current image coordinates<br>
 <br>
 
 <b>Secondary Directory:</b><br>

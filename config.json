@@ -3,6 +3,10 @@
     "enabled": true,
     "url_template": "https://www.legacysurvey.org/viewer/?ra={ra}&dec={dec}&layer=ls-dr10&zoom=16"
   },
+  "ned_search": {
+    "enabled": true,
+    "url_template": "https://ned.ipac.caltech.edu/conesearch?search_type=Near%20Position%20Search&in_csys=Equatorial&in_equinox=J2000&ra={ra}&dec={dec}&radius=1&Z_CONSTRAINT=Unconstrained"
+  },
   "secondary_download": {
     "enabled": true,
     "name": "WISE",
@@ -29,6 +33,7 @@
     "wise_toggle": "g",
     "legacy_survey": "b",
     "toggle_secondary_dir": "e",
+    "ned_search": "n",
     "zoom_in": "plus,equal",
     "zoom_out": "minus",
     "submit_and_next": "return,enter",
