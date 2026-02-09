@@ -62,7 +62,7 @@
 astrorank YOUR_IMAGE_DIRECTORY # This starts the GUI and looks for all `.jpg` files in the directory. Rankings are saved to `rankings.txt` by default.
 astrorank YOUR_IMAGE_DIRECTORY -o my_rankings.txt # Specifies custom output file
 
-Example: astrorank ~/Research/Tools/astrorank/images
+Example: astrorank ~/Research/Tools/astrorank/examples
 ```
 
 ### Image Filename Format
@@ -162,7 +162,7 @@ By default, AstroRank loads `config.json` from the current working directory, or
 astrorank YOUR_IMAGE_DIRECTORY -c custom_config.json
 astrorank YOUR_IMAGE_DIRECTORY --config custom_config.json
 
-Example: astrorank ~/Research/Tools/astrorank/images -c ~/Research/Tools/astrorank/config_galex.json
+Example: astrorank ~/Research/Tools/astrorank/examples -c ~/Research/Tools/astrorank/config_galex.json
 ```
 
 This is useful for maintaining different configurations for different projects or surveys.
