@@ -594,6 +594,12 @@ class AstrorankGUI(QMainWindow):
         self.wise_message_label.setStyleSheet("color: red; font-weight: bold;")
         self.wise_message_label.setText(f"⚠ {error_msg}")
     
+    def show_wise_error(self, error_msg):
+        """Show error message in the wise message label"""
+        self.wise_message_label.setVisible(True)
+        self.wise_message_label.setStyleSheet("color: red; font-weight: bold;")
+        self.wise_message_label.setText(f"⚠ {error_msg}")
+    
     def display_secondary_view(self):
         """Display secondary image alongside original or just original"""
         current_file = self.jpg_files[self.current_index]
