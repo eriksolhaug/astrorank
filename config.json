@@ -6,11 +6,10 @@
   "secondary_download": {
     "enabled": true,
     "name": "WISE",
-    "url_template": "https://www.legacysurvey.org/viewer/decals-unwise-neo11/{ra}/{dec}?layer=unwise-neo1&zoom=15",
-    "url_template_download": "https://www.legacysurvey.org/viewer/fits-cutout?ra={ra}&dec={dec}&layer=unwise-neo7&size=512&pixscale=0.263672&bands=w1",
+    "url_template_download": "https://www.legacysurvey.org/viewer/fits-cutout?ra={ra}&dec={dec}&layer=unwise-neo11&size=512&pixscale=0.263672&bands=w1",
     "extensions": {
-      "0": ["R", "G"],
-      "1": ["B"]
+      "0": ["B"],
+      "1": ["R", "G"]
     }
   },
   "secondary_dir": {
