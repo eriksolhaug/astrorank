@@ -122,8 +122,8 @@ The configuration supports two main sections for URL-based features:
   "name": "WISE",
   "url_template_download": "https://www.legacysurvey.org/viewer/fits-cutout?ra={ra}&dec={dec}&layer=unwise-neo7&size=512&pixscale=0.263672&bands=w1",
   "extensions": {
-    "0": ["R", "G"],
-    "1": ["B"]
+    "0": ["B"],
+    "1": ["R", "G"]
   }
 }
 ```
