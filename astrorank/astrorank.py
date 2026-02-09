@@ -1066,6 +1066,10 @@ class AstrorankGUI(QMainWindow):
     
     def on_table_click(self, item):
         """Handle clicks on the table"""
+        # Save pending rank before switching images
+        if self.rank_input.text().strip():
+            self.submit_rank()
+        
         row = item.row()
         self.current_index = row
         self.skip_scroll = True  # Don't scroll to center on click navigation

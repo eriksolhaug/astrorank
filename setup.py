@@ -6,7 +6,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="astrorank",
-    version="0.1.0",
+    version="1.0.0",
     author="Erik Solhaug",
     description="A GUI application for ranking astronomical images",
     long_description=long_description,
@@ -14,7 +14,7 @@ setup(
     url="https://github.com/eriksolhaug/astrorank",
     packages=find_packages(),
     package_data={
-        "astrorank": ["../logo/*.png", "../config.json"],
+        "astrorank": ["../logo/*.png", "../config.json", "../config_secondary.json", "../config_galex.json"],
     },
     include_package_data=True,
     classifiers=[

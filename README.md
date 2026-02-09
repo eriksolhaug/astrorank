@@ -2,6 +2,8 @@
 
 *An Image Ranking Tool for Astronomical Images*
 
+## Version 1.0
+
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
 ![PyQt5](https://img.shields.io/badge/PyQt5-5.15+-blue)
 ![Pillow](https://img.shields.io/badge/Pillow-8.0%2B-green)
