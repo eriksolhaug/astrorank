@@ -475,6 +475,8 @@ class AstrorankGUI(QMainWindow):
     def _key_matches(self, event_key, action_name, allow_shift=False):
         """Check if a keyboard event matches a configured action key"""
         key_strings = self.keys.get(action_name, [])
+        # Call event.modifiers() safely in case it's not available (e.g. on some platforms or for certain events)
+        event = event if hasattr(event, 'modifiers') else None
         has_shift = event.modifiers() & Qt.ShiftModifier if hasattr(event, 'modifiers') else False
         
         for key_str in key_strings:
@@ -507,7 +509,9 @@ class AstrorankGUI(QMainWindow):
             return
         
         ra, dec = radec
-        viewer_url = f"https://www.legacysurvey.org/viewer/?ra={ra}&dec={dec}&layer=ls-dr10&zoom=16"
+        # Using the url_template from the config to allow for customization
+        viewer_url_template = self.config.get("browser", {}).get("url_template", "https://www.legacysurvey.org/viewer/?ra={ra}&dec={dec}&layer=ls-dr10&zoom=16")
+        viewer_url = viewer_url_template.format(ra=ra, dec=dec)
         webbrowser.open(viewer_url)
 
     def open_ned_search(self):
@@ -524,7 +528,9 @@ class AstrorankGUI(QMainWindow):
         # NED expects RA in sexagesimal format, so convert it
         ra_str = f"{int(ra // 15)}h{int((ra % 15) * 4)}m{((ra % 15) * 4 - int((ra % 15) * 4)) * 60:.2f}s"
         dec_str = f"{'+' if dec >= 0 else '-'}{int(abs(dec))}d{int((abs(dec) % 1) * 60)}m{((abs(dec) % 1) * 60 - int((abs(dec) % 1) * 60)) * 60:.2f}s"
-        ned_url = f"https://ned.ipac.caltech.edu/conesearch?search_type=Near%20Position%20Search&in_csys=Equatorial&in_equinox=J2000&ra={ra_str}&dec={dec_str}&radius=1&Z_CONSTRAINT=Unconstrained"
+        # Using the url_template from the config to allow for customization
+        ned_url_template = self.config.get("ned_search", {}).get("url_template", "https://ned.ipac.caltech.edu/conesearch?search_type=Near%20Position%20Search&in_csys=Equatorial&in_equinox=J2000&ra={ra}&dec={dec}&radius=1&Z_CONSTRAINT=Unconstrained")
+        ned_url = ned_url_template.format(ra=ra_str, dec=dec_str)
         webbrowser.open(ned_url)     
         return
     
