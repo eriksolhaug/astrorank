@@ -76,27 +76,31 @@ def save_rankings(output_file: str, rankings: Dict[str, int], jpg_files: List[st
         comments = {}
     
     try:
-        # Save rankings without comments to rankings.txt
+        # Save all files to rankings.txt, with unranked files marked as empty or with placeholder
         with open(output_file, 'w') as f:
             for filename in jpg_files:
                 if filename in rankings:
                     rank = rankings[filename]
                     f.write(f"{filename}\t{rank}\n")
+                else:
+                    # Write unranked files with empty rank field (or use a placeholder like "UNRANKED")
+                    f.write(f"{filename}\t\n")
     except Exception as e:
         print(f"Error saving rankings: {e}")
     
-    # Save rankings with comments to a separate file
-    if comments:
-        try:
-            comments_file = output_file.replace('.txt', '_comments.txt')
-            with open(comments_file, 'w') as f:
-                for filename in jpg_files:
-                    if filename in rankings:
-                        rank = rankings[filename]
-                        comment = comments.get(filename, "")
-                        f.write(f"{filename}\t{rank}\t{comment}\n")
-        except Exception as e:
-            print(f"Error saving comments: {e}")
+    # Save all files with comments to a separate file
+    try:
+        comments_file = output_file.replace('.txt', '_comments.txt')
+        with open(comments_file, 'w') as f:
+            for filename in jpg_files:
+                if filename in rankings:
+                    rank = rankings[filename]
+                else:
+                    rank = ""
+                comment = comments.get(filename, "")
+                f.write(f"{filename}\t{rank}\t{comment}\n")
+    except Exception as e:
+        print(f"Error saving comments: {e}")
 
 
 def find_next_unranked(jpg_files: List[str], rankings: Dict[str, int], current_index: int) -> int:
@@ -206,6 +210,7 @@ def load_config(config_file: str = "config.json") -> Dict:
     """
     default_config = {
         "browser": {
+            "enabled": True,
             "url_template": "https://www.legacysurvey.org/viewer/?ra={ra}&dec={dec}&layer=ls-dr10&zoom=16"
         },
         "secondary_download": {
@@ -217,6 +222,10 @@ def load_config(config_file: str = "config.json") -> Dict:
                 "0": ["R", "G"],
                 "1": ["B"]
             }
+        },
+        "secondary_dir": {
+            "enabled": False,
+            "path": ""
         },
         "ranks": {
             "0": 0,

@@ -1,10 +1,10 @@
 {
   "browser": {
-    "enabled": true,
+    "enabled": false,
     "url_template": "https://www.legacysurvey.org/viewer/?ra={ra}&dec={dec}&layer=ls-dr10&zoom=16"
   },
   "secondary_download": {
-    "enabled": true,
+    "enabled": false,
     "name": "WISE",
     "url_template": "https://www.legacysurvey.org/viewer/decals-unwise-neo11/{ra}/{dec}?layer=unwise-neo1&zoom=15",
     "url_template_download": "https://www.legacysurvey.org/viewer/fits-cutout?ra={ra}&dec={dec}&layer=unwise-neo7&size=512&pixscale=0.263672&bands=w1",
@@ -14,8 +14,8 @@
     }
   },
   "secondary_dir": {
-    "enabled": false,
-    "path": ""
+    "enabled": true,
+    "path": "../test_ra150-180/stitched"
   },
   "keys": {
     "clear_input": "delete,backspace",

@@ -129,6 +129,17 @@ class AstrorankGUI(QMainWindow):
         self.config = load_config(config_file)
         secondary_config = self.config.get("secondary_download", {})
         self.secondary_enabled = secondary_config.get("enabled", True)
+        
+        # Browser functionality (configurable)
+        browser_config = self.config.get("browser", {})
+        self.browser_enabled = browser_config.get("enabled", True)
+        
+        # Secondary directory functionality (configurable)
+        secondary_dir_config = self.config.get("secondary_dir", {})
+        self.secondary_dir_enabled = secondary_dir_config.get("enabled", False)
+        self.secondary_dir_path = Path(secondary_dir_config.get("path", "")) if secondary_dir_config.get("path") else None
+        self.use_secondary_dir = False  # Toggle state for which directory to display
+        
         self.secondary_name = secondary_config.get("name", "Secondary")
         self.secondary_output_dir = Path(image_dir) / self.secondary_name.lower()
         self.secondary_images = {}  # Maps filename to path of downloaded secondary image
@@ -480,6 +491,10 @@ class AstrorankGUI(QMainWindow):
     
     def open_legacy_survey_viewer(self):
         """Open Legacy Survey viewer for current image's RA/Dec"""
+        if not self.browser_enabled:
+            self.show_wise_error("Browser functionality is disabled in config")
+            return
+        
         current_file = self.jpg_files[self.current_index]
         radec = parse_radec_from_filename(current_file)
         
@@ -582,11 +597,16 @@ class AstrorankGUI(QMainWindow):
     def display_secondary_view(self):
         """Display secondary image alongside original or just original"""
         current_file = self.jpg_files[self.current_index]
-        image_path = self.image_dir / current_file
+        
+        # Determine which directory to use for primary display
+        if self.secondary_dir_enabled and self.use_secondary_dir and self.secondary_dir_path:
+            primary_image_path = self.secondary_dir_path / current_file
+        else:
+            primary_image_path = self.image_dir / current_file
         
         if self.dual_view_active and current_file in self.secondary_images:
             # Load both images in separate containers
-            pixmap1 = QPixmap(str(image_path))
+            pixmap1 = QPixmap(str(primary_image_path))
             pixmap2 = QPixmap(self.secondary_images[current_file])
             
             if not pixmap1.isNull() and not pixmap2.isNull():
@@ -608,7 +628,7 @@ class AstrorankGUI(QMainWindow):
                 self.dual_image_label_2.setText(f"Failed to load {self.secondary_name}")
         else:
             # Just show original image in single container
-            pixmap = QPixmap(str(image_path))
+            pixmap = QPixmap(str(primary_image_path))
             if pixmap.isNull():
                 self.image_label.setText("Failed to load image")
             else:
@@ -792,6 +812,15 @@ class AstrorankGUI(QMainWindow):
             for j in range(4):
                 if self.table.item(i, j) is not None:
                     self.table.item(i, j).setBackground(bg_color)
+    
+    def toggle_secondary_dir(self):
+        """Toggle between primary and secondary directory images"""
+        if not self.secondary_dir_enabled or not self.secondary_dir_path:
+            self.show_wise_error("Secondary directory is not enabled or configured in config")
+            return
+        
+        self.use_secondary_dir = not self.use_secondary_dir
+        self.display_image()
     
     def apply_dark_stylesheet(self):
         """Apply dark mode stylesheet to the application"""
@@ -1044,6 +1073,8 @@ class AstrorankGUI(QMainWindow):
                 self.toggle_wise_view()
         elif self._key_matches_action(event, 'legacy_survey'):
             self.open_legacy_survey_viewer()
+        elif self._key_matches_action(event, 'toggle_secondary_dir'):
+            self.toggle_secondary_dir()
         elif self._key_matches_action(event, 'zoom_in'):
             self.zoom_in()
         elif self._key_matches_action(event, 'zoom_out'):
@@ -1196,6 +1227,10 @@ class HelperDialog(QDialog):
 
 <b>Legacy Survey:</b><br>
 • <b>B</b> - Open Legacy Survey viewer for current image coordinates<br>
+<br>
+
+<b>Secondary Directory:</b><br>
+• <b>E</b> - Toggle between primary and secondary directory images (if enabled)<br>
 <br>
 
 <b>Display:</b><br>

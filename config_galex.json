@@ -1,5 +1,6 @@
 {
   "browser": {
+    "enabled": true,
     "url_template": "https://www.legacysurvey.org/viewer/?ra={ra}&dec={dec}&layer=ls-dr10&zoom=16"
   },
   "secondary_download": {
@@ -11,6 +12,10 @@
       "0": ["R", "G"],
       "1": ["B"]
     }
+  },
+  "secondary_dir": {
+    "enabled": false,
+    "path": ""
   },
   "keys": {
     "clear_input": "delete,backspace",
@@ -24,6 +29,7 @@
     "comment": "k",
     "wise_toggle": "g",
     "legacy_survey": "b",
+    "toggle_secondary_dir": "e",
     "zoom_in": "plus,equal",
     "zoom_out": "minus",
     "submit_and_next": "return,enter",

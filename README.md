@@ -128,6 +128,16 @@ The configuration supports two main sections for URL-based features:
 }
 ```
 
+**Secondary Directory Section** - for toggling between images from primary and secondary directories (press `e`):
+```json
+"secondary_dir": {
+  "enabled": false,
+  "path": "/path/to/secondary/directory"
+}
+```
+
+When enabled, the secondary directory should contain images with the same filenames as the primary directory. Press `e` to toggle between displaying images from the primary and secondary directories.
+
 **Parameters:**
 - `{ra}` and `{dec}` placeholders are automatically replaced with coordinates parsed from your image filenames
 - `url_template_download`: The URL template for downloading FITS files. Supports `{ra}` and `{dec}` substitution
@@ -234,6 +244,7 @@ Customize any keyboard shortcut by editing the `keys` section (all keys are case
   "comment": "k",
   "wise_toggle": "g",
   "legacy_survey": "b",
+  "toggle_secondary_dir": "e",
   "zoom_in": "plus,equal",
   "zoom_out": "minus",
   "submit_and_next": "return,enter",
