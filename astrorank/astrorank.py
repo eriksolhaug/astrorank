@@ -391,21 +391,32 @@ class AstrorankGUI(QMainWindow):
         table_layout.setSpacing(0)  # No spacing
         
         self.table = QTableWidget()
-        self.table.setColumnCount(5)
-        secondary_header = f"{self.secondary_name}?" if self.secondary_enabled else "Secondary?"
-        self.table.setHorizontalHeaderLabels(["Filename", "Rank", "Ranked?", "Comments", secondary_header])
+        # Set column count based on whether secondary download is enabled
+        num_columns = 5 if self.secondary_enabled else 4
+        self.table.setColumnCount(num_columns)
+        
+        # Build header labels conditionally
+        headers = ["Filename", "Rank", "Ranked?", "Comments"]
+        if self.secondary_enabled:
+            secondary_header = f"{self.secondary_name}?"
+            headers.append(secondary_header)
+        self.table.setHorizontalHeaderLabels(headers)
+        
         # Set all columns resizable independently
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Interactive)  # Filename resizable
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Interactive)  # Rank resizable
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Interactive)  # Ranked? resizable
         self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Interactive)  # Comments resizable
-        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.Interactive)  # Secondary image status resizable
+        if self.secondary_enabled:
+            self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.Interactive)  # Secondary image status resizable
+        
         # Set default column widths
         self.table.setColumnWidth(0, 200)  # Filename column
         self.table.setColumnWidth(1, 45)   # Rank column
         self.table.setColumnWidth(2, 65)   # Ranked? column
         self.table.setColumnWidth(3, 110)  # Comments column
-        self.table.setColumnWidth(4, 60)   # WISE? column
+        if self.secondary_enabled:
+            self.table.setColumnWidth(4, 60)   # Secondary? column
         self.table.setRowCount(len(self.jpg_files))
         self.table.itemClicked.connect(self.on_table_click)
         self.table.setHorizontalScrollMode(1)  # ScrollPerPixel
@@ -678,8 +689,9 @@ class AstrorankGUI(QMainWindow):
             self.table_initialized = True
             # Initialize all row backgrounds on first call
             default_bg = QColor(30, 30, 30) if self.dark_mode else QColor(255, 255, 255)
+            num_columns = 5 if self.secondary_enabled else 4
             for i in range(len(self.jpg_files)):
-                for j in range(5):
+                for j in range(num_columns):
                     if self.table.item(i, j) is None:
                         self.table.setItem(i, j, QTableWidgetItem())
                     self.table.item(i, j).setBackground(default_bg)
@@ -716,19 +728,21 @@ class AstrorankGUI(QMainWindow):
             comment_item = QTableWidgetItem(comment_text)
             self.table.setItem(i, 3, comment_item)
             
-            # Secondary image indicator (checkmark if secondary image downloaded)
-            secondary_item = QTableWidgetItem("✓" if filename in self.secondary_images else "")
-            secondary_item.setTextAlignment(Qt.AlignCenter)
-            self.table.setItem(i, 4, secondary_item)
+            # Secondary image indicator (checkmark if secondary image downloaded) - only if enabled
+            if self.secondary_enabled:
+                secondary_item = QTableWidgetItem("✓" if filename in self.secondary_images else "")
+                secondary_item.setTextAlignment(Qt.AlignCenter)
+                self.table.setItem(i, 4, secondary_item)
             
             # Highlight current row, unhighlight previous
+            num_columns = 5 if self.secondary_enabled else 4
             if i == self.current_index:
                 highlight_color = QColor(70, 120, 180) if self.dark_mode else QColor(173, 216, 230)
-                for j in range(5):
+                for j in range(num_columns):
                     self.table.item(i, j).setBackground(highlight_color)
             else:
                 bg_color = QColor(30, 30, 30) if self.dark_mode else QColor(255, 255, 255)
-                for j in range(5):
+                for j in range(num_columns):
                     self.table.item(i, j).setBackground(bg_color)
         
         # Force table repaint
