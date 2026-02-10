@@ -241,7 +241,7 @@ Or use the keys as the rank values themselves:
 ```
 
 **Important:** 
-- Ensure rank keys do not overlap with any other key functionalities defined in the `keys` section (e.g., don't use 'q' as a rank if 'q' is your quit key). It is the user's responsibility to avoid these conflicts.
+- Ensure rank keys do not overlap with any other key functionalities defined in the `keys` section (e.g., don't use `q` as a rank if `q` is your quit key). It is the user's responsibility to avoid these conflicts.
 - After editing `config.json`, restart astrorank for changes to take effect
 
 The UI will automatically update to show "Rank (min-max):" based on your configured values.
