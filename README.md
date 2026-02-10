@@ -163,7 +163,7 @@ The configuration supports three sections for URL-based features:
 }
 ```
 
-You can change the survey url's to match the desired survey. This approach makes the system fully configurable - different surveys can be used by simply changing the configuration, no code modification needed. You may disable any of the features above by setting `enabled` to `false` (note that `.json` used lower case `True` and `False` booleans). Example `config_EXAMPLE.json` files have been included in the `astrorank` distribution.
+You can change the survey url's to match the desired survey. This approach makes the system fully configurable - different surveys can be used by simply changing the configuration, no code modification needed. You may disable any of the features above by setting `enabled` to `false` (note that `.json` used lower case `true` and `false` booleans). Example `config_EXAMPLE.json` files have been included in the `astrorank` distribution.
 
 ### Displaying Images with the Same Name from Two Separate Directories
 
