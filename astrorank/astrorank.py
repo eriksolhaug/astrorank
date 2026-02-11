@@ -365,6 +365,14 @@ class AstrorankGUI(QMainWindow):
         self.rank_input.returnPressed.connect(self.submit_rank)
         control_layout.addWidget(self.rank_input)
         
+        # Auto-submit checkbox
+        from PyQt5.QtWidgets import QCheckBox
+        self.auto_submit_checkbox = QCheckBox("Auto-Submit and Next ")
+        self.auto_submit_checkbox.setChecked(True)
+        self.auto_submit_checkbox.setFont(large_font)
+        self.auto_submit_checkbox.setMaximumWidth(280)
+        control_layout.addWidget(self.auto_submit_checkbox)
+        
         # Navigation buttons
         self.prev_button = QPushButton("◀ Previous")
         self.prev_button.setFont(large_font)
@@ -463,7 +471,7 @@ class AstrorankGUI(QMainWindow):
             self.image_info_label.setText(f"<table style='width: 100%;'><tr><td style='padding-right: 10px;'>{current_file}</td><td style='width: 100%;'></td><td align='right'>[{current_index_display}/{total_images}]</td></tr></table>")
         
         # Update window title
-        self.setWindowTitle("🔭 AstroRank")
+        self.setWindowTitle("🔭 AstroRank (v1.1)")
         
         # Clear rank input (but don't focus it - keep focus on main window for arrow keys)
         self.rank_input.clear()
@@ -1163,6 +1171,12 @@ class AstrorankGUI(QMainWindow):
         if key in self.rank_map:
             rank_value = self.rank_map[key]
             self.rank_input.setText(str(rank_value))
+            
+            # If auto-submit is enabled, submit the rank and go to next
+            if self.auto_submit_checkbox.isChecked():
+                self.submit_rank()
+                self.go_next()
+            
             return True
         return False
     
@@ -1263,7 +1277,7 @@ class HelperDialog(QDialog):
 
 <b>Ranking:</b><br>
 • <b>0-3</b> - Enter rank (0=worst, 3=best)<br>
-• <b>` (backtick)</b> - Also works for rank 0 (easier key access)<br>
+• <b>` (backtick)</b> or <b>Space</b> - Also works for rank 0 (easier key access)<br>
 • <b>Enter/Return</b> - Submit rank and move to next image<br>
 • <b>Delete/Backspace</b> - Clear input field<br>
 • <b>C</b> - Clear rank for current image<br>
@@ -1304,7 +1318,7 @@ class HelperDialog(QDialog):
 • <b>Q</b> - Quit astrorank<br>
 <br>
 
-<p><i>Tip: Press a number key (or backtick for 0) to fill the rank field, then use arrow keys to navigate—the rank will be submitted automatically.</i></p>
+<p><i>Tip: Press a number key (or backtick/spacebar for 0) to fill the rank field, then use arrow keys to navigate—the rank will be submitted automatically.</i></p>
         """)
         
         layout.addWidget(help_text)

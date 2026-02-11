@@ -2,7 +2,7 @@
 
 *An Image Ranking Tool for Astronomical Images*
 
-## Version 1.0
+## Version 1.1
 
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
 ![PyQt5](https://img.shields.io/badge/PyQt5-5.15+-blue)
@@ -196,7 +196,7 @@ This is useful for maintaining different configurations for different projects o
 
 ### Custom Ranking Scale
 
-By default, AstroRank uses ranks 0-3 with keys 0, 1, 2, 3, and backtick (\`) which map to rank 0. To use a different scale or custom keys, **edit the `config.json` file or (preferably) copy/create a new .json file and load with the `-c` flag** in the astrorank package directory and modify the `ranks` section:
+By default, AstroRank uses ranks 0-3 with keys 0, 1, 2, 3, backtick (\`), and space which map to rank 0. To use a different scale or custom keys, **edit the `config.json` file or (preferably) copy/create a new .json file and load with the `-c` flag** in the astrorank package directory and modify the `ranks` section:
 
 ```json
 "ranks": {
@@ -204,7 +204,8 @@ By default, AstroRank uses ranks 0-3 with keys 0, 1, 2, 3, and backtick (\`) whi
   "1": 1,
   "2": 2,
   "3": 3,
-  "backtick": 0
+  "backtick": 0,
+  "space": 0
 }
 ```
 
@@ -283,7 +284,7 @@ Multiple keys can be assigned to the same action using commas (e.g., `"quit": "q
 | Key | Action |
 |-----|--------|
 | `0-3` | Fill the rank input field (e.g. 0=least likely/worst, 3=most likely/best) |
-| `` ` `` (backtick) | Also works as rank 0 (added as an option to shorten the distance from the 0-3 keys) |
+| `` ` `` (backtick) or `Space` | Also works as rank 0 (added as options to shorten the distance from the 1-3 keys and to make giving a zero rank faster) |
 | `Enter/Return` | Submit current rank and move to next image |
 | `Delete/Backspace` | Clear the rank input field |
 | `Left/Up Arrow` | Go to previous image. Submit rank if entered |

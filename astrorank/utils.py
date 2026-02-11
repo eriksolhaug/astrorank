@@ -489,6 +489,7 @@ def string_to_qt_key(key_string: str) -> List:
         "y": Qt.Key_Y,
         "z": Qt.Key_Z,
         "backtick": Qt.Key_QuoteLeft,
+        "space": Qt.Key_Space,
         "return": Qt.Key_Return,
         "enter": Qt.Key_Enter,
         "left": Qt.Key_Left,
