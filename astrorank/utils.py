@@ -274,9 +274,10 @@ def detect_coordinate_format(ra_str: str, dec_str: str) -> str:
 def parse_radec_from_filename(filename: str) -> Optional[Tuple[float, float]]:
     """
     Parse RA and Dec from filename. Supports two formats:
-    1. Decimal degrees: <name>_<ra>_<dec>.jpg (e.g., qso_100.00371_-69.056759.jpg)
-    2. Sexagesimal: <prefix>HHMMSS.SS±DDMMSS.SS.jpg (e.g., COOLJ085925.43+074849.05.jpg)
+    1. Decimal degrees: <name>_<ra>_<dec><suffix>.jpg (e.g., qso_100.00371_-69.056759.jpg)
+    2. Sexagesimal: <prefix>HHMMSS.SS±DDMMSS.SS<suffix>.jpg (e.g., COOLJ085925.43+074849.05_DECaLS.jpg)
     
+    Coordinates can appear anywhere in the filename (before or after other text).
     Auto-detects format and converts both to decimal degrees.
     
     Args:
@@ -285,38 +286,39 @@ def parse_radec_from_filename(filename: str) -> Optional[Tuple[float, float]]:
     Returns:
         Tuple of (ra_decimal, dec_decimal) as floats, or None if parsing fails
     """
+    import re
+    
     name_without_ext = filename.rsplit('.', 1)[0]
     
-    # Try sexagesimal format first (format with + or - sign)
-    # Look for pattern: ...+... or ...-... 
-    for sep_idx, char in enumerate(name_without_ext):
-        if char in ['+', '-']:
-            # Found a separator, try to extract coordinates
-            ra_part = name_without_ext[:sep_idx]
-            dec_part = name_without_ext[sep_idx:]
-            
-            # Extract the trailing digits/dots from ra_part (RA coordinates)
-            ra_match_start = len(ra_part) - 1
-            while ra_match_start >= 0 and (ra_part[ra_match_start].isdigit() or ra_part[ra_match_start] == '.'):
-                ra_match_start -= 1
-            ra_match_start += 1
-            
-            if ra_match_start < len(ra_part):
-                ra_str = ra_part[ra_match_start:]
-                dec_str = dec_part
-                
-                # Try sexagesimal parsing
-                result = sexagesimal_to_decimal(ra_str, dec_str)
-                if result:
-                    return result
+    # Try sexagesimal format first (look for pattern: HHMMSS.SS+/-DDMMSS.SS)
+    # This pattern handles coordinates like: 085925.43+074849.05 or 085925.43-074849.05
+    # Coordinates can be anywhere in the filename, before/after other text
+    sexagesimal_pattern = r'(\d{2}\d{2}\d{2}(?:\.\d+)?)[+\-](\d{2}\d{2}\d{2}(?:\.\d+)?)'
+    sexagesimal_match = re.search(sexagesimal_pattern, name_without_ext)
     
-    # Try decimal degrees format: split by underscores and get last two parts
-    parts = name_without_ext.split('_')
+    if sexagesimal_match:
+        ra_str = sexagesimal_match.group(1)
+        dec_str_no_sign = sexagesimal_match.group(2)
+        # Get the sign before the dec portion
+        sign_pos = sexagesimal_match.start(2) - 1
+        sign = name_without_ext[sign_pos] if sign_pos >= 0 else '+'
+        dec_str = sign + dec_str_no_sign
+        
+        result = sexagesimal_to_decimal(ra_str, dec_str)
+        if result:
+            return result
     
-    if len(parts) >= 3:
+    # Try decimal degrees format: look for pattern like _XX.XX_±YY.YY
+    # Can have any prefix/suffix around them
+    decimal_pattern = r'_(-?\d+\.?\d*)_(-?\d+\.?\d*)'
+    decimal_matches = list(re.finditer(decimal_pattern, name_without_ext))
+    
+    if decimal_matches:
+        # Use the last match (in case there are multiple coordinate-like patterns)
+        match = decimal_matches[-1]
         try:
-            ra = float(parts[-2])
-            dec = float(parts[-1])
+            ra = float(match.group(1))
+            dec = float(match.group(2))
             
             # Validate ranges
             if 0 <= ra <= 360 and -90 <= dec <= 90:
