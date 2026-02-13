@@ -172,30 +172,159 @@ def is_valid_rank(rank_str: str, min_rank=0, max_rank=3, rank_map=None) -> Tuple
     return False, None
 
 
+def sexagesimal_to_decimal(ra_str: str, dec_str: str) -> Optional[Tuple[float, float]]:
+    """
+    Convert sexagesimal coordinates to decimal degrees.
+    
+    Sexagesimal format: HHMMSS.SS+DDMMSS.SS or HHMMSS.SS-DDMMSS.SS
+    Where + or - separates RA and Dec
+    
+    Args:
+        ra_str: RA in sexagesimal format (HHMMSS.SS)
+        dec_str: Dec in sexagesimal format (DDMMSS.SS with +/- sign)
+        
+    Returns:
+        Tuple of (ra_decimal, dec_decimal), or None if parsing fails
+    """
+    try:
+        # Parse RA (hours, minutes, seconds)
+        # Format: HHMMSS.SS (at least 6 digits before decimal, then optional fractional seconds)
+        ra_str = ra_str.strip()
+        if len(ra_str) < 6:
+            return None
+            
+        ra_hh = int(ra_str[0:2])
+        ra_mm = int(ra_str[2:4])
+        ra_ss = float(ra_str[4:])
+        
+        # RA in decimal degrees (convert from hours to degrees: multiply by 15)
+        ra_decimal = (ra_hh + ra_mm/60.0 + ra_ss/3600.0) * 15.0
+        
+        # Parse Dec (degrees, arcminutes, arcseconds)
+        # Format: ±DDMMSS.SS (sign, then at least 6 digits, optional fractional seconds)
+        dec_str = dec_str.strip()
+        if len(dec_str) < 7:  # At least 1 sign char + 6 digits
+            return None
+        
+        # Extract sign
+        sign = 1.0
+        if dec_str[0] == '-':
+            sign = -1.0
+            dec_str = dec_str[1:]
+        elif dec_str[0] == '+':
+            dec_str = dec_str[1:]
+        
+        if len(dec_str) < 6:
+            return None
+            
+        dec_dd = int(dec_str[0:2])
+        dec_mm = int(dec_str[2:4])
+        dec_ss = float(dec_str[4:])
+        
+        # Dec in decimal degrees
+        dec_decimal = sign * (dec_dd + dec_mm/60.0 + dec_ss/3600.0)
+        
+        return (ra_decimal, dec_decimal)
+    except (ValueError, IndexError):
+        return None
+
+
+def detect_coordinate_format(ra_str: str, dec_str: str) -> str:
+    """
+    Detect coordinate format: 'decimal' or 'sexagesimal'
+    
+    Args:
+        ra_str: RA string from filename
+        dec_str: Dec string from filename
+        
+    Returns:
+        'decimal', 'sexagesimal', or 'unknown'
+    """
+    ra_str = ra_str.strip()
+    dec_str = dec_str.strip()
+    
+    # Check for sexagesimal: contains + or - at the junction, and RA/Dec are mostly digits
+    # Sexagesimal format example: 085925.43+074849.05 or 085925.43-074849.05
+    if any(c in dec_str[:1] for c in ['+', '-']):
+        # Try to detect if it looks like sexagesimal
+        if len(ra_str) >= 6 and len(dec_str) >= 7:
+            # Check if characters are mostly digits/dots
+            ra_valid = all(c.isdigit() or c == '.' for c in ra_str)
+            dec_valid = all(c.isdigit() or c == '.' or c in ['+', '-'] for c in dec_str)
+            if ra_valid and dec_valid:
+                return 'sexagesimal'
+    
+    # Check for decimal: should be parseable as float
+    try:
+        float(ra_str)
+        float(dec_str)
+        # Both are valid floats, check if they look like coordinates
+        # RA should be 0-360 (or 0-24 in hours, but we'll accept wider range)
+        # Dec should be -90 to +90
+        ra_float = float(ra_str)
+        dec_float = float(dec_str)
+        if 0 <= ra_float <= 360 and -90 <= dec_float <= 90:
+            return 'decimal'
+    except ValueError:
+        pass
+    
+    return 'unknown'
+
+
 def parse_radec_from_filename(filename: str) -> Optional[Tuple[float, float]]:
     """
-    Parse RA and Dec from filename of format: <name>_<ra>_<dec>.jpg
+    Parse RA and Dec from filename. Supports two formats:
+    1. Decimal degrees: <name>_<ra>_<dec>.jpg (e.g., qso_100.00371_-69.056759.jpg)
+    2. Sexagesimal: <prefix>HHMMSS.SS±DDMMSS.SS.jpg (e.g., COOLJ085925.43+074849.05.jpg)
+    
+    Auto-detects format and converts both to decimal degrees.
     
     Args:
         filename: Filename to parse
         
     Returns:
-        Tuple of (ra, dec) as floats, or None if parsing fails
+        Tuple of (ra_decimal, dec_decimal) as floats, or None if parsing fails
     """
-    # Remove .jpg extension and split by underscores
     name_without_ext = filename.rsplit('.', 1)[0]
+    
+    # Try sexagesimal format first (format with + or - sign)
+    # Look for pattern: ...+... or ...-... 
+    for sep_idx, char in enumerate(name_without_ext):
+        if char in ['+', '-']:
+            # Found a separator, try to extract coordinates
+            ra_part = name_without_ext[:sep_idx]
+            dec_part = name_without_ext[sep_idx:]
+            
+            # Extract the trailing digits/dots from ra_part (RA coordinates)
+            ra_match_start = len(ra_part) - 1
+            while ra_match_start >= 0 and (ra_part[ra_match_start].isdigit() or ra_part[ra_match_start] == '.'):
+                ra_match_start -= 1
+            ra_match_start += 1
+            
+            if ra_match_start < len(ra_part):
+                ra_str = ra_part[ra_match_start:]
+                dec_str = dec_part
+                
+                # Try sexagesimal parsing
+                result = sexagesimal_to_decimal(ra_str, dec_str)
+                if result:
+                    return result
+    
+    # Try decimal degrees format: split by underscores and get last two parts
     parts = name_without_ext.split('_')
     
-    # Need at least 3 parts: name, ra, dec
-    if len(parts) < 3:
-        return None
+    if len(parts) >= 3:
+        try:
+            ra = float(parts[-2])
+            dec = float(parts[-1])
+            
+            # Validate ranges
+            if 0 <= ra <= 360 and -90 <= dec <= 90:
+                return (ra, dec)
+        except (ValueError, IndexError):
+            pass
     
-    try:
-        ra = float(parts[-2])
-        dec = float(parts[-1])
-        return (ra, dec)
-    except (ValueError, IndexError):
-        return None
+    return None
 
 
 def load_config(config_file: str = "config.json") -> Dict:

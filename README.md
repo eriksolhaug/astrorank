@@ -2,7 +2,7 @@
 
 *An Image Ranking Tool for Astronomical Images*
 
-## Version 1.1
+## Version 1.2
 
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
 ![PyQt5](https://img.shields.io/badge/PyQt5-5.15+-blue)
@@ -69,15 +69,27 @@ Example: astrorank ~/Research/Tools/astrorank/examples
 
 ### Image Filename Format
 
-`astrorank` can read any .jpg files, and the file name does not need a specific format for the software to work. However, for `astrorank` to work with the browser (press `b`) and secondary image download (press `g`) features enabled, your image filenames must follow this format:
+`astrorank` can read any .jpg files, and the file name does not need a specific format for the software to work. However, for `astrorank` to work with the browser (press `b`) and secondary image download (press `g`) features enabled, your image filenames must include coordinates in one of these formats:
 
+**Format 1: Decimal Degrees (recommended)**
 ```
 <any_name>_<ra>_<dec>.jpg
 ```
-
-Where `<ra>` and `<dec>` are the right ascension and declination in **decimal degrees**. This is so that `astrorank` can obtain the RA and DEC of the image and use this to query the field online.
+Where `<ra>` and `<dec>` are in **decimal degrees** (0-360° for RA, -90° to +90° for Dec).
 
 **Example:** `qso_aug_aug21_2025A_run1_100.00371_-69.056759.jpg`
+
+**Format 2: Sexagesimal (HMS/DMS)**
+```
+<any_name>HHMMSS.SS±DDMMSS.SS.jpg
+```
+Where coordinates are in sexagesimal format:
+- RA: `HHMMSS.SS` (hours, minutes, seconds)
+- Dec: `±DDMMSS.SS` (degrees, arcminutes, arcseconds, with +/- sign)
+
+**Example:** `COOLJ085925.43+074849.05.jpg` or `decals0335004.82-1928007.68.jpg`
+
+**Auto-detection:** `astrorank` automatically detects which format your filenames use and converts both to decimal degrees internally for searches and downloads.
 
 ### Output Files
 

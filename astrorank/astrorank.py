@@ -471,7 +471,7 @@ class AstrorankGUI(QMainWindow):
             self.image_info_label.setText(f"<table style='width: 100%;'><tr><td style='padding-right: 10px;'>{current_file}</td><td style='width: 100%;'></td><td align='right'>[{current_index_display}/{total_images}]</td></tr></table>")
         
         # Update window title
-        self.setWindowTitle("🔭 AstroRank (v1.1)")
+        self.setWindowTitle("🔭 AstroRank (v1.2)")
         
         # Clear rank input (but don't focus it - keep focus on main window for arrow keys)
         self.rank_input.clear()
