@@ -199,6 +199,20 @@ class AstrorankGUI(QMainWindow):
         large_font = QFont()
         large_font.setPointSize(int(large_font.pointSize() * 1.5))
         
+        self.save_button = QPushButton("Save")
+        self.save_button.setFont(large_font)
+        self.save_button.setMaximumWidth(100)
+        self.save_button.clicked.connect(self.save_rankings_now)
+        top_bar.addWidget(self.save_button)
+        
+        self.save_quit_button = QPushButton("Save and Quit")
+        self.save_quit_button.setFont(large_font)
+        self.save_quit_button.setMaximumWidth(150)
+        self.save_quit_button.clicked.connect(self.close)
+        top_bar.addWidget(self.save_quit_button)
+
+        top_bar.addSpacing(30)
+
         self.toggle_list_button = QPushButton("Hide List")
         self.toggle_list_button.setFont(large_font)
         self.toggle_list_button.setMaximumWidth(120)
@@ -471,7 +485,7 @@ class AstrorankGUI(QMainWindow):
             self.image_info_label.setText(f"<table style='width: 100%;'><tr><td style='padding-right: 10px;'>{current_file}</td><td style='width: 100%;'></td><td align='right'>[{current_index_display}/{total_images}]</td></tr></table>")
         
         # Update window title
-        self.setWindowTitle("🔭 AstroRank (v1.2)")
+        self.setWindowTitle("🔭 AstroRank (v1.3)")
         
         # Clear rank input (but don't focus it - keep focus on main window for arrow keys)
         self.rank_input.clear()
@@ -869,6 +883,12 @@ class AstrorankGUI(QMainWindow):
                 if self.table.item(i, j) is not None:
                     self.table.item(i, j).setBackground(bg_color)
     
+    def save_rankings_now(self):
+        """Save rankings and comments to disk (without quitting)"""
+        save_rankings(str(self.output_file), self.rankings, self.jpg_files, self.comments)
+        self.save_counter = 0  # Reset counter
+        print("Rankings file and rankings+comments file saved!")
+    
     def toggle_secondary_dir(self):
         """Toggle between primary and secondary directory images"""
         if not self.secondary_dir_enabled or not self.secondary_dir_path:
@@ -1126,6 +1146,8 @@ class AstrorankGUI(QMainWindow):
             self.toggle_list_visibility()
         elif self._key_matches_action(event, 'toggle_dark_mode'):
             self.toggle_dark_mode()
+        elif self._key_matches_action(event, 'save'):
+            self.save_rankings_now()
         elif self._key_matches_action(event, 'comment'):
             self.open_comment_dialog()
         elif self._key_matches_action(event, 'wise_toggle'):
@@ -1315,7 +1337,8 @@ class HelperDialog(QDialog):
 <br>
 
 <b>Application:</b><br>
-• <b>Q</b> - Quit astrorank<br>
+• <b>S</b> - Save<br>
+• <b>Q</b> - Save and quit astrorank<br>
 <br>
 
 <p><i>Tip: Press a number key (or backtick/spacebar for 0) to fill the rank field, then use arrow keys to navigate—the rank will be submitted automatically.</i></p>

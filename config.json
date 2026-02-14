@@ -40,7 +40,8 @@
     "previous": "left,up",
     "next": "right,down",
     "first_image": "shift+left",
-    "skip_to_next_unranked": "shift+right"
+    "skip_to_next_unranked": "shift+right",
+    "save": "s"
   },
   "ranks": {
     "0": 0,

@@ -2,7 +2,7 @@
 
 *An Image Ranking Tool for Astronomical Images*
 
-## Version 1.2
+## Version 1.3
 
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
 ![PyQt5](https://img.shields.io/badge/PyQt5-5.15+-blue)
@@ -281,7 +281,8 @@ Customize any keyboard shortcut by editing the `keys` section (all keys are case
   "previous": "left,up",
   "next": "right,down",
   "first_image": "shift+left",
-  "skip_to_next_unranked": "shift+right"
+  "skip_to_next_unranked": "shift+right",
+  "save": "s"
 }
 ```
 
@@ -315,7 +316,8 @@ Multiple keys can be assigned to the same action using commas (e.g., `"quit": "q
 | `n` | Open NED search in a browser for current coordinates (when enabled in the config) |
 | `+` / `−` | Zoom image in/out |
 | `?` | Show/hide keyboard shortcuts helper |
-| `q` | Quit the application |
+| `s` | Save rankings and comments to disk |
+| `q` | Save and quit the application |
 
 ---
 
