@@ -282,6 +282,11 @@ Customize any keyboard shortcut by editing the `keys` section (all keys are case
   "next": "right,down",
   "first_image": "shift+left",
   "skip_to_next_unranked": "shift+right",
+  "brightness_increase": "bracketright",
+  "brightness_decrease": "bracketleft",
+  "contrast_increase": "apostrophe",
+  "contrast_decrease": "semicolon",
+  "reset_brightness_contrast": "backslash",
   "save": "s"
 }
 ```
@@ -305,6 +310,11 @@ Multiple keys can be assigned to the same action using commas (e.g., `"quit": "q
 | `Shift + Left Arrow` | Jump to the first image |
 | `Shift + Right Arrow` | Skip to next unranked image (or submit rank first) |
 | `c` | Clear the rank for current image |
+| `]` | Increase brightness |
+| `[` | Decrease brightness |
+| `'` | Increase contrast |
+| `;` | Decrease contrast |
+| `\` | Reset brightness and contrast to normal |
 | `f` | Fit image to container (reset zoom) |
 | `r` | Reset image container to original size |
 | `l` | Toggle list panel visibility |

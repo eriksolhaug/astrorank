@@ -11,10 +11,10 @@ from pathlib import Path
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
     QLabel, QLineEdit, QPushButton, QScrollArea, QTableWidget, QTableWidgetItem,
-    QHeaderView, QMessageBox, QDialog, QTextEdit, QInputDialog, QProgressBar
+    QHeaderView, QMessageBox, QDialog, QTextEdit, QInputDialog, QProgressBar, QSlider
 )
-from PyQt5.QtGui import QPixmap, QColor, QFont, QIcon
-from PyQt5.QtCore import Qt, QSize, QTimer, QThread, pyqtSignal
+from PyQt5.QtGui import QPixmap, QColor, QFont, QIcon, QTransform, QImage
+from PyQt5.QtCore import Qt, QSize, QTimer, QThread, pyqtSignal, QBuffer
 
 from astrorank.utils import (
     get_jpg_files, load_rankings, save_rankings,
@@ -25,23 +25,24 @@ from astrorank.utils import (
 from astrorank.ui_utils import get_astrorank_icon
 
 
-class WiseDownloadWorker(QThread):
-    """Worker thread for downloading WISE images without blocking UI"""
+class DownloadWorker(QThread):
+    """Worker thread for downloading secondary images without blocking UI"""
     progress = pyqtSignal(int)
     finished = pyqtSignal(str)  # Emits path to downloaded image or empty string on failure
     error = pyqtSignal(str)  # Emits error message
     
-    def __init__(self, ra, dec, output_dir, config):
+    def __init__(self, ra, dec, output_dir, config, filename=None):
         super().__init__()
         self.ra = ra
         self.dec = dec
         self.output_dir = output_dir
         self.config = config
+        self.filename = filename
     
     def run(self):
         """Run the download in a separate thread"""
         try:
-            result = download_secondary_image(self.ra, self.dec, self.output_dir, self.config)
+            result = download_secondary_image(self.ra, self.dec, self.output_dir, self.config, self.filename, self.progress.emit)
             if result:
                 self.finished.emit(result)
             else:
@@ -124,6 +125,10 @@ class AstrorankGUI(QMainWindow):
         self.dark_mode = False  # Track dark mode state
         self.original_container_width = 680  # Original container width for reset
         self.original_container_height = 680  # Original container height for reset
+        
+        # Brightness and contrast adjustment tracking
+        self.brightness_multiplier = 1.0  # 1.0 = normal, > 1.0 = brighter, < 1.0 = darker
+        self.contrast_multiplier = 1.0    # 1.0 = normal, > 1.0 = more contrast, < 1.0 = less contrast
         
         # Secondary image download functionality (configurable survey)
         self.config = load_config(config_file)
@@ -246,15 +251,15 @@ class AstrorankGUI(QMainWindow):
         self.image_info_label.setTextFormat(Qt.RichText)
         self.image_info_label.setMaximumHeight(30)
         
-        # WISE download progress bar and message (shown below both single and dual views)
-        self.wise_progress_bar = QProgressBar()
-        self.wise_progress_bar.setVisible(False)
-        self.wise_progress_bar.setMaximumHeight(20)
+        # Secondary download progress bar and message (shown below both single and dual views)
+        self.download_progress_bar = QProgressBar()
+        self.download_progress_bar.setVisible(False)
+        self.download_progress_bar.setMaximumHeight(20)
         
-        self.wise_message_label = QLabel()
-        self.wise_message_label.setVisible(False)
-        self.wise_message_label.setAlignment(Qt.AlignCenter)
-        self.wise_message_label.setMaximumHeight(25)
+        self.download_message_label = QLabel()
+        self.download_message_label.setVisible(False)
+        self.download_message_label.setAlignment(Qt.AlignCenter)
+        self.download_message_label.setMaximumHeight(25)
         
         # Image container - wraps image display (without info label or progress bar)
         image_container = QWidget()
@@ -276,7 +281,7 @@ class AstrorankGUI(QMainWindow):
         # Store reference for resizing
         self.image_container = image_container
         
-        # Create dual-view container (side-by-side images for WISE comparison)
+        # Create dual-view container (side-by-side images for secondary comparison)
         dual_view_container = QWidget()
         dual_view_layout = QHBoxLayout()
         dual_view_layout.setContentsMargins(0, 0, 0, 0)
@@ -337,14 +342,91 @@ class AstrorankGUI(QMainWindow):
         self.fit_button.clicked.connect(self.fit_image)
         zoom_layout.addWidget(self.fit_button)
         
-        self.reset_button = QPushButton("Reset")
+        self.reset_button = QPushButton("Resize")
         self.reset_button.setFont(small_font)
         self.reset_button.setMaximumWidth(55)
         self.reset_button.clicked.connect(self.reset_image_container)
         zoom_layout.addWidget(self.reset_button)
         
         zoom_layout.addStretch()
-        image_wrapper.addLayout(zoom_layout)
+        
+        # Brightness and Contrast control panel (below zoom buttons)
+        brightness_contrast_layout = QVBoxLayout()
+        brightness_contrast_layout.setContentsMargins(5, 5, 0, 0)
+        brightness_contrast_layout.setSpacing(8)
+        self.brightness_contrast_layout = brightness_contrast_layout  # Store reference for later
+        
+        # Brightness controls
+        brightness_slider_layout = QVBoxLayout()
+        brightness_slider_layout.setContentsMargins(0, 0, 0, 0)
+        brightness_slider_layout.setSpacing(3)
+        
+        self.brightness_slider = QSlider(Qt.Vertical)
+        self.brightness_slider.setMinimum(50)    # 0.5x brightness
+        self.brightness_slider.setMaximum(200)   # 2.0x brightness
+        self.brightness_slider.setValue(100)     # 1.0x = normal
+        self.brightness_slider.setMaximumHeight(100)
+        self.brightness_slider.setMaximumWidth(30)
+        self.brightness_slider.sliderMoved.connect(self.on_brightness_changed)
+        brightness_slider_layout.addWidget(self.brightness_slider)
+        
+        # Brightness label
+        self.brightness_label = QLabel("Brightness: 1.0")
+        brightness_label_font = QFont()
+        brightness_label_font.setPointSize(7)
+        self.brightness_label.setFont(brightness_label_font)
+        self.brightness_label.setAlignment(Qt.AlignCenter)
+        brightness_slider_layout.addWidget(self.brightness_label)
+        
+        brightness_contrast_layout.addLayout(brightness_slider_layout)
+        
+        # Contrast controls
+        contrast_slider_layout = QVBoxLayout()
+        contrast_slider_layout.setContentsMargins(0, 0, 0, 0)
+        contrast_slider_layout.setSpacing(3)
+        
+        self.contrast_slider = QSlider(Qt.Vertical)
+        self.contrast_slider.setMinimum(50)      # 0.5x contrast
+        self.contrast_slider.setMaximum(200)     # 2.0x contrast
+        self.contrast_slider.setValue(100)       # 1.0x = normal
+        self.contrast_slider.setMaximumHeight(100)
+        self.contrast_slider.setMaximumWidth(30)
+        self.contrast_slider.sliderMoved.connect(self.on_contrast_changed)
+        contrast_slider_layout.addWidget(self.contrast_slider)
+        
+        # Contrast label
+        self.contrast_label = QLabel("Contrast: 1.0")
+        contrast_label_font = QFont()
+        contrast_label_font.setPointSize(7)
+        self.contrast_label.setFont(contrast_label_font)
+        self.contrast_label.setAlignment(Qt.AlignCenter)
+        contrast_slider_layout.addWidget(self.contrast_label)
+        
+        brightness_contrast_layout.addLayout(contrast_slider_layout)
+        
+        # Reset Scale button
+        self.reset_scale_button = QPushButton("Default")
+        self.reset_scale_button.setFont(small_font)
+        self.reset_scale_button.setMaximumWidth(58)
+        self.reset_scale_button.clicked.connect(self.reset_brightness_contrast)
+        brightness_contrast_layout.addWidget(self.reset_scale_button)
+        
+        brightness_contrast_layout.addStretch()
+        
+        # Right panel: zoom and brightness/contrast controls (stacked vertically)
+        right_panel_layout = QVBoxLayout()
+        right_panel_layout.setContentsMargins(0, 0, 0, 0)
+        right_panel_layout.setSpacing(5)
+        right_panel_layout.addLayout(zoom_layout)
+        right_panel_layout.addLayout(brightness_contrast_layout)
+        
+        # Wrapper for image container with controls
+        image_wrapper = QHBoxLayout()
+        image_wrapper.setContentsMargins(0, 0, 0, 0)
+        image_wrapper.setSpacing(5)
+        image_wrapper.addWidget(image_container, 0)
+        image_wrapper.addWidget(dual_view_container, 0)  # Add dual view container to wrapper
+        image_wrapper.addLayout(right_panel_layout)
         
         # Create a container layout that includes the info label, image containers, and progress bar
         # This ensures the info label and progress bar stay visible when switching between single and dual view
@@ -353,8 +435,8 @@ class AstrorankGUI(QMainWindow):
         images_layout.setSpacing(0)
         images_layout.addWidget(self.image_info_label)
         images_layout.addLayout(image_wrapper)
-        images_layout.addWidget(self.wise_progress_bar)
-        images_layout.addWidget(self.wise_message_label)
+        images_layout.addWidget(self.download_progress_bar)
+        images_layout.addWidget(self.download_message_label)
         
         left_layout.addLayout(images_layout, 0)
         
@@ -471,6 +553,18 @@ class AstrorankGUI(QMainWindow):
         current_file = self.jpg_files[self.current_index]
         image_path = self.image_dir / current_file
         
+        # Reset brightness and contrast to original values when changing images
+        self.brightness_multiplier = 1.0
+        self.contrast_multiplier = 1.0
+        self.brightness_slider.blockSignals(True)
+        self.contrast_slider.blockSignals(True)
+        self.brightness_slider.setValue(100)
+        self.contrast_slider.setValue(100)
+        self.brightness_label.setText("Brightness: 1.0")
+        self.contrast_label.setText("Contrast: 1.0")
+        self.brightness_slider.blockSignals(False)
+        self.contrast_slider.blockSignals(False)
+        
         # Use the new display method that handles both single and dual view
         self.display_secondary_view()
         
@@ -531,7 +625,7 @@ class AstrorankGUI(QMainWindow):
     def open_legacy_survey_viewer(self):
         """Open Legacy Survey viewer for current image's RA/Dec"""
         if not self.browser_enabled:
-            self.show_wise_error("Browser functionality is disabled in config")
+            self.show_secondary_error("Browser functionality is disabled in config")
             return
         
         current_file = self.jpg_files[self.current_index]
@@ -550,12 +644,12 @@ class AstrorankGUI(QMainWindow):
     def open_ned_search(self):
         """Open NED search for current image's RA/Dec"""
         if not self.ned_search_enabled:
-            self.show_wise_error("NED search functionality is disabled in config")
+            self.show_secondary_error("NED search functionality is disabled in config")
             return
         current_file = self.jpg_files[self.current_index]
         radec = parse_radec_from_filename(current_file)
         if radec is None:
-            self.show_wise_error("Could not parse RA/Dec from filename")
+            self.show_secondary_error("Could not parse RA/Dec from filename")
             return
         ra, dec = radec
         # NED expects RA in sexagesimal format, so convert it
@@ -567,7 +661,146 @@ class AstrorankGUI(QMainWindow):
         webbrowser.open(ned_url)     
         return
     
-    def toggle_wise_view(self):
+    def on_brightness_changed(self):
+        """Handle brightness slider changes"""
+        self.brightness_multiplier = self.brightness_slider.value() / 100.0
+        self.brightness_label.setText(f"Brightness: {self.brightness_multiplier:.1f}")
+        # Update image without triggering layout changes
+        self._update_displayed_image()
+    
+    def on_contrast_changed(self):
+        """Handle contrast slider changes"""
+        self.contrast_multiplier = self.contrast_slider.value() / 100.0
+        self.contrast_label.setText(f"Contrast: {self.contrast_multiplier:.1f}")
+        # Update image without triggering layout changes
+        self._update_displayed_image()
+    
+    def _update_displayed_image(self):
+        """Update the currently displayed image with brightness/contrast applied"""
+        current_file = self.jpg_files[self.current_index]
+        
+        # Determine which directory to use
+        if self.secondary_dir_enabled and self.use_secondary_dir and self.secondary_dir_path:
+            image_path = self.secondary_dir_path / current_file
+        else:
+            image_path = self.image_dir / current_file
+        
+        if self.dual_view_active and current_file in self.secondary_images:
+            # Update dual view
+            pixmap1 = QPixmap(str(image_path))
+            pixmap2 = QPixmap(self.secondary_images[current_file])
+            pixmap1 = self.apply_brightness_contrast(pixmap1)
+            pixmap2 = self.apply_brightness_contrast(pixmap2)
+            
+            if not pixmap1.isNull() and not pixmap2.isNull():
+                container_width = self.dual_view_container.width()
+                width_per_image = int((container_width - 30) / 2)
+                scaled_width = int(width_per_image * self.dual_view_zoom)
+                scaled1 = pixmap1.scaledToWidth(scaled_width, Qt.SmoothTransformation)
+                scaled2 = pixmap2.scaledToWidth(scaled_width, Qt.SmoothTransformation)
+                self.dual_image_label_1.setPixmap(scaled1)
+                self.dual_image_label_2.setPixmap(scaled2)
+        else:
+            # Update single view
+            pixmap = QPixmap(str(image_path))
+            pixmap = self.apply_brightness_contrast(pixmap)
+            if not pixmap.isNull():
+                base_width = int(600 * self.zoom_level)
+                scaled_pixmap = pixmap.scaledToWidth(base_width, Qt.SmoothTransformation)
+                self.image_label.setPixmap(scaled_pixmap)
+    
+    def reset_brightness_contrast(self):
+        """Reset brightness and contrast to original values"""
+        self.brightness_multiplier = 1.0
+        self.contrast_multiplier = 1.0
+        self.brightness_slider.blockSignals(True)
+        self.contrast_slider.blockSignals(True)
+        self.brightness_slider.setValue(100)
+        self.contrast_slider.setValue(100)
+        self.brightness_label.setText("Brightness: 1.0")
+        self.contrast_label.setText("Contrast: 1.0")
+        self.brightness_slider.blockSignals(False)
+        self.contrast_slider.blockSignals(False)
+        self.display_secondary_view()
+    
+    def brightness_increase(self):
+        """Increase brightness by 10%"""
+        new_value = min(self.brightness_slider.value() + 10, 200)
+        self.brightness_slider.blockSignals(True)
+        self.brightness_slider.setValue(new_value)
+        self.brightness_slider.blockSignals(False)
+        self.brightness_multiplier = new_value / 100.0
+        self.brightness_label.setText(f"Brightness: {self.brightness_multiplier:.1f}")
+        self._update_displayed_image()
+    
+    def brightness_decrease(self):
+        """Decrease brightness by 10%"""
+        new_value = max(self.brightness_slider.value() - 10, 50)
+        self.brightness_slider.blockSignals(True)
+        self.brightness_slider.setValue(new_value)
+        self.brightness_slider.blockSignals(False)
+        self.brightness_multiplier = new_value / 100.0
+        self.brightness_label.setText(f"Brightness: {self.brightness_multiplier:.1f}")
+        self._update_displayed_image()
+    
+    def contrast_increase(self):
+        """Increase contrast by 10%"""
+        new_value = min(self.contrast_slider.value() + 10, 200)
+        self.contrast_slider.blockSignals(True)
+        self.contrast_slider.setValue(new_value)
+        self.contrast_slider.blockSignals(False)
+        self.contrast_multiplier = new_value / 100.0
+        self.contrast_label.setText(f"Contrast: {self.contrast_multiplier:.1f}")
+        self._update_displayed_image()
+    
+    def contrast_decrease(self):
+        """Decrease contrast by 10%"""
+        new_value = max(self.contrast_slider.value() - 10, 50)
+        self.contrast_slider.blockSignals(True)
+        self.contrast_slider.setValue(new_value)
+        self.contrast_slider.blockSignals(False)
+        self.contrast_multiplier = new_value / 100.0
+        self.contrast_label.setText(f"Contrast: {self.contrast_multiplier:.1f}")
+        self._update_displayed_image()
+    
+    def apply_brightness_contrast(self, pixmap):
+        """Apply brightness and contrast adjustments to a pixmap"""
+        if self.brightness_multiplier == 1.0 and self.contrast_multiplier == 1.0:
+            return pixmap
+        
+        from PIL import Image, ImageEnhance
+        
+        # Convert QPixmap to QImage and ensure standard RGB format
+        qimage = pixmap.toImage()
+        
+        # Convert to RGB888 format to ensure consistent byte order
+        if qimage.format() != QImage.Format_RGB888:
+            qimage = qimage.convertToFormat(QImage.Format_RGB888)
+        
+        width, height = qimage.width(), qimage.height()
+        
+        # Extract RGB data directly (3 bytes per pixel in standard RGB order)
+        ptr = qimage.bits()
+        ptr.setsize(qimage.byteCount())
+        rgb_bytes = bytes(ptr)
+        
+        # Create PIL image from RGB bytes
+        pil_image = Image.frombytes('RGB', (width, height), rgb_bytes)
+        
+        # Apply brightness
+        brightness_enhancer = ImageEnhance.Brightness(pil_image)
+        pil_image = brightness_enhancer.enhance(self.brightness_multiplier)
+        
+        # Apply contrast
+        contrast_enhancer = ImageEnhance.Contrast(pil_image)
+        pil_image = contrast_enhancer.enhance(self.contrast_multiplier)
+        
+        # Convert PIL image back to QImage
+        rgb_data = pil_image.tobytes()
+        qimage_new = QImage(rgb_data, width, height, 3 * width, QImage.Format_RGB888)
+        return QPixmap.fromImage(qimage_new)
+    
+    def toggle_secondary_view(self):
         """Toggle between downloading secondary image or showing dual view"""
         current_file = self.jpg_files[self.current_index]
         
@@ -591,7 +824,7 @@ class AstrorankGUI(QMainWindow):
             self.dual_view_zoom = 1.0
             self.image_container.setVisible(False)
             self.dual_view_container.setVisible(True)
-            # Try to download the WISE image
+            # Try to download the secondary image
             self.download_secondary_for_current()
     
     def download_secondary_for_current(self):
@@ -600,14 +833,14 @@ class AstrorankGUI(QMainWindow):
         radec = parse_radec_from_filename(current_file)
         
         if radec is None:
-            self.show_wise_error("Could not parse RA/Dec from filename")
+            self.show_secondary_error("Could not parse RA/Dec from filename")
             return
         
         ra, dec = radec
         
         # Show progress bar
-        self.wise_progress_bar.setVisible(True)
-        self.wise_progress_bar.setValue(0)
+        self.download_progress_bar.setVisible(True)
+        self.download_progress_bar.setValue(0)
         
         # Disable navigation keys and buttons during download
         self.downloading = True
@@ -615,7 +848,8 @@ class AstrorankGUI(QMainWindow):
         self.next_button.setEnabled(False)
         
         # Create and start download worker thread
-        self.download_worker = WiseDownloadWorker(ra, dec, str(self.secondary_output_dir), self.config)
+        self.download_worker = DownloadWorker(ra, dec, str(self.secondary_output_dir), self.config, current_file)
+        self.download_worker.progress.connect(self.download_progress_bar.setValue)
         self.download_worker.finished.connect(self.on_secondary_download_success)
         self.download_worker.error.connect(self.show_secondary_error)
         self.download_worker.start()
@@ -631,17 +865,17 @@ class AstrorankGUI(QMainWindow):
         self.secondary_images[current_file] = image_path
         
         # Hide progress bar and show success message
-        self.wise_progress_bar.setVisible(False)
-        self.wise_message_label.setVisible(True)
-        self.wise_message_label.setStyleSheet("color: green; font-weight: bold;")
-        self.wise_message_label.setText(f"✓ {self.secondary_name}")
+        self.download_progress_bar.setVisible(False)
+        self.download_message_label.setVisible(True)
+        self.download_message_label.setStyleSheet("color: green; font-weight: bold;")
+        self.download_message_label.setText(f"✓ {self.secondary_name}")
         
         # Show dual view
         self.dual_view_active = True
         self.display_secondary_view()
         
         # Hide message after 5 seconds
-        QTimer.singleShot(5000, lambda: self.wise_message_label.setVisible(False))
+        QTimer.singleShot(5000, lambda: self.download_message_label.setVisible(False))
     
     def show_secondary_error(self, error_msg):
         """Show secondary download error message"""
@@ -650,16 +884,10 @@ class AstrorankGUI(QMainWindow):
         self.prev_button.setEnabled(True)
         self.next_button.setEnabled(True)
         
-        self.wise_progress_bar.setVisible(False)
-        self.wise_message_label.setVisible(True)
-        self.wise_message_label.setStyleSheet("color: red; font-weight: bold;")
-        self.wise_message_label.setText(f"⚠ {error_msg}")
-    
-    def show_wise_error(self, error_msg):
-        """Show error message in the wise message label"""
-        self.wise_message_label.setVisible(True)
-        self.wise_message_label.setStyleSheet("color: red; font-weight: bold;")
-        self.wise_message_label.setText(f"⚠ {error_msg}")
+        self.download_progress_bar.setVisible(False)
+        self.download_message_label.setVisible(True)
+        self.download_message_label.setStyleSheet("color: red; font-weight: bold;")
+        self.download_message_label.setText(f"⚠ {error_msg}")
     
     def display_secondary_view(self):
         """Display secondary image alongside original or just original"""
@@ -675,6 +903,10 @@ class AstrorankGUI(QMainWindow):
             # Load both images in separate containers
             pixmap1 = QPixmap(str(primary_image_path))
             pixmap2 = QPixmap(self.secondary_images[current_file])
+            
+            # Apply brightness and contrast
+            pixmap1 = self.apply_brightness_contrast(pixmap1)
+            pixmap2 = self.apply_brightness_contrast(pixmap2)
             
             if not pixmap1.isNull() and not pixmap2.isNull():
                 # Calculate width for each image (equal size side-by-side)
@@ -696,6 +928,10 @@ class AstrorankGUI(QMainWindow):
         else:
             # Just show original image in single container
             pixmap = QPixmap(str(primary_image_path))
+            
+            # Apply brightness and contrast
+            pixmap = self.apply_brightness_contrast(pixmap)
+            
             if pixmap.isNull():
                 self.image_label.setText("Failed to load image")
             else:
@@ -779,7 +1015,7 @@ class AstrorankGUI(QMainWindow):
             self.skip_scroll = False  # Reset flag for next navigation
     
     def submit_rank(self):
-        """Submit a rank for the current image"""
+        """Submit a rank for the current image. Returns True if successful, False if invalid."""
         rank_str = self.rank_input.text().strip()
         is_valid, rank = is_valid_rank(rank_str, self.min_rank, self.max_rank, self.rank_config)
         
@@ -792,7 +1028,7 @@ class AstrorankGUI(QMainWindow):
                 valid_keys = ", ".join(self.rank_config.keys()) if self.rank_config else "no ranks configured"
                 error_msg = f"Please enter one of: {valid_keys}"
             QMessageBox.warning(self, "Invalid Input", error_msg)
-            return
+            return False
         
         current_file = self.jpg_files[self.current_index]
         self.rankings[current_file] = rank
@@ -806,6 +1042,7 @@ class AstrorankGUI(QMainWindow):
         
         # Update table (only affected rows)
         self.update_table()
+        return True
     
     def go_previous(self):
         """Go to previous image"""
@@ -850,6 +1087,8 @@ class AstrorankGUI(QMainWindow):
             # Restore original proportions (2:1 ratio)
             self.main_layout.setStretch(0, 2)
             self.main_layout.setStretch(1, 1)
+            # Restore original window size
+            self.resize(1400, 760)
         else:
             # Hide the list and adjust layout to use full width for image viewer
             self.table_container.setVisible(False)
@@ -857,6 +1096,8 @@ class AstrorankGUI(QMainWindow):
             # Give all space to left layout
             self.main_layout.setStretch(0, 1)
             self.main_layout.setStretch(1, 0)
+            # Resize window to fit just the image viewer
+            self.resize(900, 760)
     
     def toggle_dark_mode(self):
         """Toggle between dark and light modes"""
@@ -892,7 +1133,7 @@ class AstrorankGUI(QMainWindow):
     def toggle_secondary_dir(self):
         """Toggle between primary and secondary directory images"""
         if not self.secondary_dir_enabled or not self.secondary_dir_path:
-            self.show_wise_error("Secondary directory is not enabled or configured in config")
+            self.show_secondary_error("Secondary directory is not enabled or configured in config")
             return
         
         self.use_secondary_dir = not self.use_secondary_dir
@@ -1152,7 +1393,7 @@ class AstrorankGUI(QMainWindow):
             self.open_comment_dialog()
         elif self._key_matches_action(event, 'wise_toggle'):
             if self.secondary_enabled:
-                self.toggle_wise_view()
+                self.toggle_secondary_view()
         elif self._key_matches_action(event, 'legacy_survey'):
             self.open_legacy_survey_viewer()
         elif self._key_matches_action(event, 'ned_search'):
@@ -1163,27 +1404,43 @@ class AstrorankGUI(QMainWindow):
             self.zoom_in()
         elif self._key_matches_action(event, 'zoom_out'):
             self.zoom_out()
+        elif self._key_matches_action(event, 'brightness_increase'):
+            self.brightness_increase()
+        elif self._key_matches_action(event, 'brightness_decrease'):
+            self.brightness_decrease()
+        elif self._key_matches_action(event, 'contrast_increase'):
+            self.contrast_increase()
+        elif self._key_matches_action(event, 'contrast_decrease'):
+            self.contrast_decrease()
+        elif self._key_matches_action(event, 'reset_brightness_contrast'):
+            self.reset_brightness_contrast()
         elif self._key_matches_action(event, 'submit_and_next'):
-            self.submit_rank()
-            self.go_next()
+            if self.submit_rank():  # Only navigate if rank submission was successful
+                self.go_next()
         elif self._key_matches_action(event, 'first_image'):
             if self.rank_input.text().strip():
-                self.submit_rank()
+                if self.submit_rank():  # Only navigate if rank submission was successful
+                    self.go_to_first()
             else:
                 self.go_to_first()
         elif self._key_matches_action(event, 'skip_to_next_unranked'):
             if self.rank_input.text().strip():
-                self.submit_rank()
+                if self.submit_rank():  # Only navigate if rank submission was successful
+                    self.skip_to_next_unranked()
             else:
                 self.skip_to_next_unranked()
         elif self._key_matches_action(event, 'previous'):
             if self.rank_input.text().strip():
-                self.submit_rank()
-            self.go_previous()
+                if self.submit_rank():  # Only navigate if rank submission was successful
+                    self.go_previous()
+            else:
+                self.go_previous()
         elif self._key_matches_action(event, 'next'):
             if self.rank_input.text().strip():
-                self.submit_rank()
-            self.go_next()
+                if self.submit_rank():  # Only navigate if rank submission was successful
+                    self.go_next()
+            else:
+                self.go_next()
         else:
             super().keyPressEvent(event)
     
@@ -1308,6 +1565,14 @@ class HelperDialog(QDialog):
 <b>Comments:</b><br>
 • <b>K</b> - Open comment dialog for current image<br>
 • Double-click a comment in the list to edit it<br>
+<br>
+
+<b>Brightness & Contrast:</b><br>
+• <b>]</b> - Increase brightness<br>
+• <b>[</b> - Decrease brightness<br>
+• <b>'</b> - Increase contrast<br>
+• <b>;</b> - Decrease contrast<br>
+• <b>\</b> - Reset brightness and contrast to normal<br>
 <br>
 
 <b>Secondary Downloads:</b><br>

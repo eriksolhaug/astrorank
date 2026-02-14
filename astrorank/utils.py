@@ -229,6 +229,50 @@ def sexagesimal_to_decimal(ra_str: str, dec_str: str) -> Optional[Tuple[float, f
         return None
 
 
+def decimal_to_sexagesimal_ra(ra_decimal: float) -> str:
+    """
+    Convert RA from decimal degrees to sexagesimal HMS format (HHMMSS.SS)
+    
+    Args:
+        ra_decimal: RA in decimal degrees (0-360)
+    
+    Returns:
+        RA in sexagesimal HMS format as string (HHMMSS.SS)
+    """
+    # RA: degrees to hours (divide by 15)
+    ra_hours = ra_decimal / 15.0
+    
+    hours = int(ra_hours)
+    minutes_decimal = (ra_hours - hours) * 60
+    minutes = int(minutes_decimal)
+    seconds = (minutes_decimal - minutes) * 60
+    
+    # Format as HHMMSS.SS
+    return f"{hours:02d}{minutes:02d}{seconds:05.2f}"
+
+
+def decimal_to_sexagesimal_dec(dec_decimal: float) -> str:
+    """
+    Convert Dec from decimal degrees to sexagesimal DMS format (±DDMMSS.SS)
+    
+    Args:
+        dec_decimal: Dec in decimal degrees (-90 to +90)
+    
+    Returns:
+        Dec in sexagesimal DMS format as string (±DDMMSS.SS)
+    """
+    sign = '+' if dec_decimal >= 0 else '-'
+    dec_abs = abs(dec_decimal)
+    
+    degrees = int(dec_abs)
+    minutes_decimal = (dec_abs - degrees) * 60
+    minutes = int(minutes_decimal)
+    seconds = (minutes_decimal - minutes) * 60
+    
+    # Format as ±DDMMSS.SS
+    return f"{sign}{degrees:02d}{minutes:02d}{seconds:05.2f}"
+
+
 def detect_coordinate_format(ra_str: str, dec_str: str) -> str:
     """
     Detect coordinate format: 'decimal' or 'sexagesimal'
@@ -393,15 +437,17 @@ def load_config(config_file: str = "config.json") -> Dict:
     return default_config
 
 
-def download_secondary_image(ra: float, dec: float, output_dir: str, config: Dict) -> Optional[str]:
+def download_secondary_image(ra: float, dec: float, output_dir: str, config: Dict, filename: str = None, progress_callback=None) -> Optional[str]:
     """
     Download secondary image FITS file and create RGB composite JPG based on config
     
     Args:
-        ra: Right ascension
-        dec: Declination
+        ra: Right ascension (decimal degrees)
+        dec: Declination (decimal degrees)
         output_dir: Directory to save image to
         config: Configuration dictionary with secondary_download section
+        filename: Original filename to preserve coordinate format in output
+        progress_callback: Optional callable that takes an int (0-100) for progress updates
         
     Returns:
         Path to generated RGB JPG image, or None if download failed
@@ -415,6 +461,11 @@ def download_secondary_image(ra: float, dec: float, output_dir: str, config: Dic
         print("Error: astropy required for FITS processing. Install with: pip install astropy")
         return None
     
+    def emit_progress(value):
+        """Helper to emit progress safely"""
+        if progress_callback:
+            progress_callback(value)
+    
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
     
@@ -424,6 +475,17 @@ def download_secondary_image(ra: float, dec: float, output_dir: str, config: Dic
     url_template_download = secondary_config.get("url_template_download")
     extensions_mapping = secondary_config.get("extensions", {})
     
+    # Determine coordinate format for output filename
+    coord_str = f"{ra}_{dec}"  # Default: decimal
+    if filename:
+        # Check if original filename is in sexagesimal format by looking for the pattern
+        # Sexagesimal format has HHMMSS.SS+/-DDMMSS.SS pattern
+        if re.search(r'\d{2}\d{2}\d{2}(?:\.\d+)?[+\-]\d{2}\d{2}\d{2}(?:\.\d+)?', filename):
+            # Convert decimal back to sexagesimal for output filename
+            ra_hms = decimal_to_sexagesimal_ra(ra)
+            dec_dms = decimal_to_sexagesimal_dec(dec)
+            coord_str = f"{ra_hms}{dec_dms}"
+    
     if not url_template_download:
         print(f"Error: url_template_download not found in secondary_download config")
         return None
@@ -432,9 +494,13 @@ def download_secondary_image(ra: float, dec: float, output_dir: str, config: Dic
     fits_url = url_template_download.replace("{ra}", str(ra)).replace("{dec}", str(dec))
     
     try:
+        emit_progress(10)  # 10% - starting download
+        
         # Download FITS file
-        response = requests.get(fits_url, timeout=30)
+        response = requests.get(fits_url, timeout=30, stream=True)
         response.raise_for_status()
+        
+        emit_progress(25)  # 25% - download complete
         
         # Save temporary FITS file
         fits_path = Path(output_dir) / f"temp_{survey_name}_{ra}_{dec}.fits"
@@ -442,10 +508,14 @@ def download_secondary_image(ra: float, dec: float, output_dir: str, config: Dic
         with open(fits_path, 'wb') as f:
             f.write(response.content)
         
+        emit_progress(40)  # 40% - FITS file saved
+        
         # Load FITS data
         hdul = fits.open(fits_path)
         data = hdul[0].data.astype(float)
         hdul.close()
+        
+        emit_progress(50)  # 50% - FITS data loaded
         
         # Get image dimensions (assume last two dims are spatial)
         if len(data.shape) == 3:
@@ -505,6 +575,8 @@ def download_secondary_image(ra: float, dec: float, output_dir: str, config: Dic
         # Create RGB image based on extension mapping
         rgb = np.zeros((height, width, 3), dtype=np.uint8)
         
+        emit_progress(60)  # 60% - starting composite creation
+        
         # Map each layer to RGB channels according to config
         for layer_idx_str, channels in extensions_mapping.items():
             layer_idx = int(layer_idx_str)
@@ -521,17 +593,21 @@ def download_secondary_image(ra: float, dec: float, output_dir: str, config: Dic
                     elif channel == "B":
                         rgb[:, :, 2] = scaled
         
+        emit_progress(75)  # 75% - composite created
+        
         # Flip image vertically (across y-axis) for correct orientation
         rgb = np.flipud(rgb)
         
         # Convert to PIL Image and save as JPG
         image = Image.fromarray(rgb, mode='RGB')
-        output_path = Path(output_dir) / f"{survey_name}_{ra}_{dec}.jpg"
+        output_path = Path(output_dir) / f"{survey_name}_{coord_str}.jpg"
         image.save(output_path, quality=90)
         
+        emit_progress(90)  # 90% - JPG saved
         # Clean up temporary FITS file
         fits_path.unlink()
         
+        emit_progress(100)  # 100% - complete
         return str(output_path)
     
     except Exception as e:
@@ -627,6 +703,11 @@ def string_to_qt_key(key_string: str) -> List:
         "up": Qt.Key_Up,
         "right": Qt.Key_Right,
         "down": Qt.Key_Down,
+        "bracketright": Qt.Key_BracketRight,
+        "bracketleft": Qt.Key_BracketLeft,
+        "semicolon": Qt.Key_Semicolon,
+        "apostrophe": Qt.Key_Apostrophe,
+        "backslash": Qt.Key_Backslash,
     }
     
     # Handle shift modifier

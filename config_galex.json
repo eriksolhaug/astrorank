@@ -39,7 +39,12 @@
     "previous": "left,up",
     "next": "right,down",
     "first_image": "shift+left",
-    "skip_to_next_unranked": "shift+right"
+    "skip_to_next_unranked": "shift+right",
+    "brightness_increase": "bracketright",
+    "brightness_decrease": "bracketleft",
+    "contrast_increase": "apostrophe",
+    "contrast_decrease": "semicolon",
+    "reset_brightness_contrast": "backslash"
   },
   "ranks": {
     "0": 0,
