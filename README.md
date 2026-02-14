@@ -58,7 +58,7 @@
 
 ## How to Use AstroRank?
 
-### Basic Usage
+### Running AstroRank
 
 ```bash
 astrorank YOUR_IMAGE_DIRECTORY # This starts the GUI and looks for all `.jpg` files in the directory. Rankings are saved to `rankings.txt` by default.
