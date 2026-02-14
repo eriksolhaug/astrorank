@@ -73,7 +73,7 @@ Example: astrorank ~/Research/Tools/astrorank/examples
 
 **Format 1: Decimal Degrees (recommended)**
 ```
-<any_name>_<ra>_<dec>.jpg
+<any_name><ra>_<dec>.jpg
 ```
 Where `<ra>` and `<dec>` are in **decimal degrees** (0-360° for RA, -90° to +90° for Dec).
 
