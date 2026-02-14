@@ -79,7 +79,7 @@ Where `<ra>` and `<dec>` are in **decimal degrees** (0-360° for RA, -90° to +9
 
 **Example:** `qso_aug_aug21_2025A_run1_100.00371_-69.056759.jpg`
 
-**Format 2: Sexagesimal (HMS/DMS)**
+**Format 2: Sexagesimal (HHMMSS.SS+-DDMMSS.SS)**
 ```
 <any_name>HHMMSS.SS±DDMMSS.SS.jpg
 ```
