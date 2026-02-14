@@ -54,6 +54,20 @@
    astrorank YOUR_IMAGE_DIRECTORY
    ```
 
+#### Troubleshooting: Qt Platform Plugin Error (Windows WSL Users)
+
+If you're using **Windows with WSL (Windows Subsystem for Linux)** and see an error like:
+```
+qt.qpa.plugin: Could not load the Qt platform plugin "xcb" in ""
+This application failed to start because no Qt platform plugin could be initialized.
+```
+
+Install the missing system library required by the graphics interface:
+
+```bash
+sudo apt-get install libxkbcommon-x11-0
+```
+
 ---
 
 ## How to Use AstroRank?
