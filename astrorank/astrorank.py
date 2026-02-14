@@ -1262,7 +1262,7 @@ class AstrorankGUI(QMainWindow):
                 expanded_size = min(expanded_size, 1400)  # Cap at 1400
                 self.image_container.setMaximumHeight(expanded_size)
                 self.image_container.setMaximumWidth(expanded_size)
-        self.display_image()
+        self._update_displayed_image()
     
     def zoom_out(self):
         """Decrease image zoom by 10%"""
@@ -1280,7 +1280,7 @@ class AstrorankGUI(QMainWindow):
                 expanded_size = min(expanded_size, 1400)
                 self.image_container.setMaximumHeight(expanded_size)
                 self.image_container.setMaximumWidth(expanded_size)
-        self.display_image()
+        self._update_displayed_image()
     
     def fit_image(self):
         """Fit the image to the image container"""
@@ -1288,7 +1288,7 @@ class AstrorankGUI(QMainWindow):
             self.dual_view_zoom = 1.0
         else:
             self.zoom_level = 1.0
-        self.display_image()
+        self._update_displayed_image()
     
     def reset_image_container(self):
         """Reset the image container to its original size"""
@@ -1296,7 +1296,7 @@ class AstrorankGUI(QMainWindow):
         self.image_container.setMaximumWidth(self.original_container_width)
         self.zoom_level = 1.0
         self.dual_view_zoom = 1.0
-        self.display_image()
+        self._update_displayed_image()
     
     def toggle_helper(self):
         """Toggle the helper window"""
