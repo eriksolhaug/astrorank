@@ -1097,7 +1097,7 @@ class AstrorankGUI(QMainWindow):
             self.main_layout.setStretch(0, 1)
             self.main_layout.setStretch(1, 0)
             # Resize window to fit just the image viewer
-            self.resize(900, 760) 
+            self.resize(900, 760)
     
     def toggle_dark_mode(self):
         """Toggle between dark and light modes"""
