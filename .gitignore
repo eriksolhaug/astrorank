@@ -14,4 +14,6 @@ build/
 htmlcov/
 rankings.txt
 rankings_comments.txt
-test/
+test/convert_examples.py
+examples/wise/
+examples_test/

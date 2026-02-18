@@ -77,7 +77,7 @@ def save_rankings(output_file: str, rankings: Dict[str, int], jpg_files: List[st
     
     try:
         # Save all files to rankings.txt, with unranked files marked as empty or with placeholder
-        with open(output_file, 'w') as f:
+        with open(output_file, 'w', buffering=1) as f:  # Line buffering for immediate writes
             for filename in jpg_files:
                 if filename in rankings:
                     rank = rankings[filename]
@@ -85,13 +85,14 @@ def save_rankings(output_file: str, rankings: Dict[str, int], jpg_files: List[st
                 else:
                     # Write unranked files with empty rank field (or use a placeholder like "UNRANKED")
                     f.write(f"{filename}\t\n")
+            f.flush()  # Explicit flush to ensure all data is written
     except Exception as e:
         print(f"Error saving rankings: {e}")
     
     # Save all files with comments to a separate file
     try:
         comments_file = output_file.replace('.txt', '_comments.txt')
-        with open(comments_file, 'w') as f:
+        with open(comments_file, 'w', buffering=1) as f:  # Line buffering for immediate writes
             for filename in jpg_files:
                 if filename in rankings:
                     rank = rankings[filename]
@@ -99,6 +100,7 @@ def save_rankings(output_file: str, rankings: Dict[str, int], jpg_files: List[st
                     rank = ""
                 comment = comments.get(filename, "")
                 f.write(f"{filename}\t{rank}\t{comment}\n")
+            f.flush()  # Explicit flush to ensure all data is written
     except Exception as e:
         print(f"Error saving comments: {e}")
 
