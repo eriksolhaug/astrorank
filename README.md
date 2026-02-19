@@ -83,7 +83,7 @@ Example: astrorank ~/Research/Tools/astrorank/examples
 
 ### Image Filename Format
 
-`astrorank` can read any .jpg files, and the file name does not need a specific format for the software to work. However, for `astrorank` to work with the browser (press `b`) and secondary image download (press `g`) features enabled, your image filenames must include coordinates in one of these formats:
+`astrorank` can read any .jpg files, and the file name does not need a specific format for the software to work. However, for `astrorank` to work with the browser (press `w`) and secondary image download (press `g`) features enabled, your image filenames must include coordinates in one of these formats:
 
 **Format 1: Decimal Degrees (recommended)**
 ```
@@ -136,7 +136,7 @@ AstroRank uses a `config.json` file to customize keyboard shortcuts, ranking sca
 
 The configuration supports three sections for URL-based features:
 
-**Browser Section** - for opening survey viewers (press `b`):
+**Browser Section** - for opening survey viewers (press `w`):
 ```json
 "browser": {
    "enabled": true,
@@ -287,12 +287,12 @@ Customize any keyboard shortcut by editing the `keys` section (all keys are case
   "toggle_dark_mode": "d",
   "comment": "k",
   "wise_toggle": "g",
-  "legacy_survey": "b",
+  "legacy_survey": "w",
   "toggle_secondary_dir": "e",
   "zoom_in": "plus,equal",
   "zoom_out": "minus",
   "submit_and_next": "return,enter",
-  "previous": "left,up",
+  "previous": "left,up,b",
   "next": "right,down",
   "first_image": "shift+left",
   "skip_to_next_unranked": "shift+right",
@@ -319,7 +319,7 @@ Multiple keys can be assigned to the same action using commas (e.g., `"quit": "q
 | `` ` `` (backtick) or `Space` | Also works as rank 0 (added as options to shorten the distance from the 1-3 keys and to make giving a zero rank faster) |
 | `Enter/Return` | Submit current rank and move to next image |
 | `Delete/Backspace` | Clear the rank input field |
-| `Left/Up Arrow` | Go to previous image. Submit rank if entered |
+| `Left/Up Arrow` or `b` | Go to previous image. Submit rank if entered |
 | `Right/Down Arrow` | Go to next image. Submit rank if entered |
 | `Shift + Left Arrow` | Jump to the first image |
 | `Shift + Right Arrow` | Skip to next unranked image (or submit rank first) |
@@ -336,7 +336,7 @@ Multiple keys can be assigned to the same action using commas (e.g., `"quit": "q
 | `k` | Open comment dialog for current image |
 | `e` | Toggle images from the secondary directory that are already downloaded (when enabled in the config) |
 | `g` | Download secondary images (when enabled in the config). E.g. WISE unwise neo11 image (press again to toggle dual view) |
-| `b` | Open Legacy Survey viewer for current coordinates (when enabled in the config) |
+| `w` | Open Legacy Survey viewer for current coordinates (when enabled in the config) |
 | `n` | Open NED search in a browser for current coordinates (when enabled in the config) |
 | `+` / `−` | Zoom image in/out |
 | `?` | Show/hide keyboard shortcuts helper |

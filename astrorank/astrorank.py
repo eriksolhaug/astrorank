@@ -1564,7 +1564,7 @@ class HelperDialog(QDialog):
 <h2>AstroRank Keyboard Shortcuts</h2><br>
 
 <b>Image Navigation:</b><br>
-• <b>← / ↑</b> - Go to previous image<br>
+• <b>← / ↑ / B</b> - Go to previous image<br>
 • <b>→ / ↓</b> - Go to next image<br>
 • <b>Shift+←</b> - Jump to first image<br>
 • <b>Shift+→</b> - Skip to next unranked image<br>
@@ -1597,7 +1597,7 @@ class HelperDialog(QDialog):
 <br>
 
 <b>Legacy Survey:</b><br>
-• <b>B</b> - Open Legacy Survey viewer for current image coordinates<br>
+• <b>W</b> - Open Legacy Survey viewer for current image coordinates<br>
 <br>
 
 <b>NED Search:</b><br>
