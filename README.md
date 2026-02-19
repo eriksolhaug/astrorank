@@ -103,7 +103,7 @@ Where coordinates are in sexagesimal format:
 
 **Example:** `COOLJ085925.43+074849.05.jpg` or `decals0335004.82-1928007.68.jpg`
 
-**Auto-detection:** `astrorank` automatically detects which format your filenames use and converts both to decimal degrees internally for searches and downloads.
+**Auto-detection:** `astrorank` automatically detects which format your filenames use and converts both to decimal degrees internally for searches and downloads. **Note:** `astrorank` works fine with input file names without RA and DEC in them, only that the web-based functionalities that rely on coordinate information will not work. 
 
 ### Output Files
 
@@ -190,26 +190,7 @@ AstroRank uses a `config.json` file to customize keyboard shortcuts, ranking sca
 
 The configuration supports three sections for URL-based features.
 
-**Note:** For the Browser, NED Search, and Secondary Downloads features to work, your image filenames must contain coordinates in one of these formats:
-
-**Format 1: Decimal Degrees (recommended)**
-```
-<any_name><ra>_<dec>.jpg
-```
-Where `<ra>` and `<dec>` are in decimal degrees (0-360° for RA, -90° to +90° for Dec).
-**Example:** `qso_aug_aug21_2025A_run1_100.00371_-69.056759.jpg`
-
-**Format 2: Sexagesimal (HHMMSS.SS±DDMMSS.SS)**
-```
-<any_name>HHMMSS.SS±DDMMSS.SS.jpg
-```
-Where coordinates are in sexagesimal format:
-- RA: `HHMMSS.SS` (hours, minutes, seconds)
-- Dec: `±DDMMSS.SS` (degrees, arcminutes, arcseconds, with +/- sign)
-
-**Example:** `COOLJ085925.43+074849.05.jpg` or `decals0335004.82-1928007.68.jpg`
-
-AstroRank automatically detects which format your filenames use. The three functionalities you can then use are:
+**Note:** For the Browser, NED Search, and Secondary Downloads features to work, your image filenames must contain coordinates in one of the formats mentioned in the **Image Filename Format** section above.
 
 **Browser Section** - for opening survey viewers (press `w`):
 ```json
