@@ -211,6 +211,12 @@ class AstrorankGUI(QMainWindow):
         self.save_button.clicked.connect(self.save_rankings_now)
         top_bar.addWidget(self.save_button)
         
+        self.view_rankings_button = QPushButton("View Rankings File")
+        self.view_rankings_button.setFont(large_font)
+        self.view_rankings_button.setMaximumWidth(180)
+        self.view_rankings_button.clicked.connect(self.view_rankings)
+        top_bar.addWidget(self.view_rankings_button)
+        
         self.save_quit_button = QPushButton("Save and Quit")
         self.save_quit_button.setFont(large_font)
         self.save_quit_button.setMaximumWidth(150)
@@ -1603,7 +1609,12 @@ class RankingsViewer(QDialog):
         # Create text display area
         self.text_display = QPlainTextEdit()
         self.text_display.setReadOnly(True)
-        self.text_display.setFont(QFont("Monospace", 10))
+        font = QFont("Menlo", 10)
+        self.text_display.setFont(font)
+        # Set tab stop width for column alignment
+        metrics = self.text_display.fontMetrics()
+        tab_width = metrics.width(" " * 10)
+        self.text_display.setTabStopDistance(tab_width)
         layout.addWidget(self.text_display)
         
         # Create close button
