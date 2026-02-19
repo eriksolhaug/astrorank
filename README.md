@@ -128,6 +128,70 @@ astrorank YOUR_IMAGE_DIRECTORY -o my_rankings.txt # Resumes the session for my_r
 
 ---
 
+## Keyboard Shortcuts
+
+**Fast Workflow:** Press a number (0-3), then press Enter or arrow keys to submit and move.
+
+| Key | Action |
+|-----|--------|
+| `0-3` | Fill the rank input field (e.g. 0=least likely/worst, 3=most likely/best) |
+| `` ` `` (backtick) or `Space` | Also works as rank 0 (added as options to shorten the distance from the 1-3 keys and to make giving a zero rank faster) |
+| `Enter/Return` | Submit current rank and move to next image |
+| `Delete/Backspace` | Clear the rank input field |
+| `Left/Up Arrow` or `b` | Go to previous image. Submit rank if entered |
+| `Right/Down Arrow` | Go to next image. Submit rank if entered |
+| `Shift + Left Arrow` | Jump to the first image |
+| `Shift + Right Arrow` | Skip to next unranked image (or submit rank first) |
+| `c` | Clear the rank for current image |
+| `]` | Increase brightness |
+| `[` | Decrease brightness |
+| `'` | Increase contrast |
+| `;` | Decrease contrast |
+| `\` | Reset brightness and contrast to normal |
+| `f` | Fit image to container (reset zoom) |
+| `r` | Reset image container to original size |
+| `l` | Toggle list panel visibility |
+| `d` | Toggle dark/light mode |
+| `k` | Open comment dialog for current image |
+| `e` | Toggle images from the secondary directory that are already downloaded (when enabled in the config) |
+| `g` | Download secondary images (when enabled in the config). E.g. WISE unwise neo11 image (press again to toggle dual view) |
+| `w` | Open Legacy Survey viewer for current coordinates (when enabled in the config) |
+| `n` | Open NED search in a browser for current coordinates (when enabled in the config) |
+| `+` / `−` | Zoom image in/out |
+| `?` | Show/hide keyboard shortcuts helper |
+| `s` | Save rankings and comments to disk |
+| `v` | View rankings files in a separate window (can be useful to verify that the rankings were saved before quitting application) |
+| `q` | Save and quit the application |
+
+---
+
+## Some Notes about the Interface
+
+- **Image Viewer**: Display of current active image with filename and previous ranking (if any) shown above in parentheses
+- **Zoom Controls**: Click the + and − buttons to adjust image size and expand container; "Fit" button to reset zoom to default; "Reset" button to return container to original size
+- **Rank Input**: Text field for entering ranks (0-3)
+- **Navigation Buttons**: Previous, Next, Skip to Next Unranked, and Hide/Show List - can use these instead of keys
+- **Image List Panel**: Shows all images with filenames, ranks, ranking status, and WISE download status (toggle visibility with `L` key)
+
+---
+
+## Output Format
+
+The output `.txt` file has the following format:
+
+```
+image_001.jpg 0
+image_002.jpg 0
+image_003.jpg 1
+image_001.jpg 0
+image_002.jpg 3
+image_003.jpg 0
+```
+
+Each line contains a filename and its rank (0-3).
+
+---
+
 ## Configuration
 
 AstroRank uses a `config.json` file to customize keyboard shortcuts, ranking scales, browser URLs, and the survey for the dual-panel view. The configuration file is automatically created in the working directory on first run with default values.
@@ -136,7 +200,7 @@ AstroRank uses a `config.json` file to customize keyboard shortcuts, ranking sca
 
 The configuration supports three sections for URL-based features:
 
-**Browser Section** - for opening survey viewers (press `w`):
+**Browser Section** - for opening survey browser viewers (press `w`):
 ```json
 "browser": {
    "enabled": true,
@@ -279,96 +343,37 @@ Customize any keyboard shortcut by editing the `keys` section (all keys are case
 
 ```json
 "keys": {
-  "quit": "q",
-  "clear_rank": "c",
-  "fit_image": "f",
-  "reset_container": "r",
-  "toggle_list": "l",
-  "toggle_dark_mode": "d",
-  "comment": "k",
-  "wise_toggle": "g",
-  "legacy_survey": "w",
-  "toggle_secondary_dir": "e",
-  "zoom_in": "plus,equal",
-  "zoom_out": "minus",
-  "submit_and_next": "return,enter",
-  "previous": "left,up,b",
-  "next": "right,down",
-  "first_image": "shift+left",
-  "skip_to_next_unranked": "shift+right",
-  "brightness_increase": "bracketright",
-  "brightness_decrease": "bracketleft",
-  "contrast_increase": "apostrophe",
-  "contrast_decrease": "semicolon",
-  "reset_brightness_contrast": "backslash",
-  "save": "s"
+    "clear_input": "delete,backspace",
+    "quit": "q",
+    "clear_rank": "c",
+    "fit_image": "f",
+    "reset_container": "r",
+    "toggle_helper": "shift+?",
+    "toggle_list": "l",
+    "toggle_dark_mode": "d",
+    "comment": "k",
+    "wise_toggle": "g",
+    "legacy_survey": "w",
+    "toggle_secondary_dir": "e",
+    "ned_search": "n",
+    "zoom_in": "plus,equal",
+    "zoom_out": "minus",
+    "submit_and_next": "return,enter",
+    "previous": "left,up,b",
+    "next": "right,down",
+    "first_image": "shift+left",
+    "skip_to_next_unranked": "shift+right",
+    "save": "s",
+    "view_rankings": "v",
+    "brightness_increase": "bracketright",
+    "brightness_decrease": "bracketleft",
+    "contrast_increase": "apostrophe",
+    "contrast_decrease": "semicolon",
+    "reset_brightness_contrast": "backslash"
 }
 ```
 
 Multiple keys can be assigned to the same action using commas (e.g., `"quit": "q,escape"`). Works on Windows, macOS, and Linux.
-
----
-
-## Keyboard Shortcuts
-
-**Fast Workflow:** Press a number (0-3), then press Enter or arrow keys to submit and move.
-
-| Key | Action |
-|-----|--------|
-| `0-3` | Fill the rank input field (e.g. 0=least likely/worst, 3=most likely/best) |
-| `` ` `` (backtick) or `Space` | Also works as rank 0 (added as options to shorten the distance from the 1-3 keys and to make giving a zero rank faster) |
-| `Enter/Return` | Submit current rank and move to next image |
-| `Delete/Backspace` | Clear the rank input field |
-| `Left/Up Arrow` or `b` | Go to previous image. Submit rank if entered |
-| `Right/Down Arrow` | Go to next image. Submit rank if entered |
-| `Shift + Left Arrow` | Jump to the first image |
-| `Shift + Right Arrow` | Skip to next unranked image (or submit rank first) |
-| `c` | Clear the rank for current image |
-| `]` | Increase brightness |
-| `[` | Decrease brightness |
-| `'` | Increase contrast |
-| `;` | Decrease contrast |
-| `\` | Reset brightness and contrast to normal |
-| `f` | Fit image to container (reset zoom) |
-| `r` | Reset image container to original size |
-| `l` | Toggle list panel visibility |
-| `d` | Toggle dark/light mode |
-| `k` | Open comment dialog for current image |
-| `e` | Toggle images from the secondary directory that are already downloaded (when enabled in the config) |
-| `g` | Download secondary images (when enabled in the config). E.g. WISE unwise neo11 image (press again to toggle dual view) |
-| `w` | Open Legacy Survey viewer for current coordinates (when enabled in the config) |
-| `n` | Open NED search in a browser for current coordinates (when enabled in the config) |
-| `+` / `−` | Zoom image in/out |
-| `?` | Show/hide keyboard shortcuts helper |
-| `s` | Save rankings and comments to disk |
-| `q` | Save and quit the application |
-
----
-
-## Some Notes about the Interface
-
-- **Image Viewer**: Display of current active image with filename and previous ranking (if any) shown above in parentheses
-- **Zoom Controls**: Click the + and − buttons to adjust image size and expand container; "Fit" button to reset zoom to default; "Reset" button to return container to original size
-- **Rank Input**: Text field for entering ranks (0-3)
-- **Navigation Buttons**: Previous, Next, Skip to Next Unranked, and Hide/Show List - can use these instead of keys
-- **Image List Panel**: Shows all images with filenames, ranks, ranking status, and WISE download status (toggle visibility with `L` key)
-
----
-
-## Output Format
-
-The output `.txt` file has the following format:
-
-```
-image_001.jpg 0
-image_002.jpg 0
-image_003.jpg 1
-image_001.jpg 0
-image_002.jpg 3
-image_003.jpg 0
-```
-
-Each line contains a filename and its rank (0-3).
 
 ---
 

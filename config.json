@@ -42,6 +42,7 @@
     "first_image": "shift+left",
     "skip_to_next_unranked": "shift+right",
     "save": "s",
+    "view_rankings": "v",
     "brightness_increase": "bracketright",
     "brightness_decrease": "bracketleft",
     "contrast_increase": "apostrophe",

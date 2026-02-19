@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
     QLabel, QLineEdit, QPushButton, QScrollArea, QTableWidget, QTableWidgetItem,
     QHeaderView, QMessageBox, QDialog, QTextEdit, QInputDialog, QProgressBar, QSlider,
-    QSplitter
+    QSplitter, QPlainTextEdit
 )
 from PyQt5.QtGui import QPixmap, QColor, QFont, QIcon, QTransform, QImage
 from PyQt5.QtCore import Qt, QSize, QTimer, QThread, pyqtSignal, QBuffer
@@ -1145,6 +1145,28 @@ class AstrorankGUI(QMainWindow):
         save_rankings(str(self.output_file), self.rankings, self.jpg_files, self.comments)
         self.save_counter = 0  # Reset counter
         print("Rankings file and rankings+comments file saved!")
+        
+        # Show success dialog for 5 seconds
+        comments_file = str(self.output_file).rsplit('.', 1)[0] + '_comments.txt'
+        dialog = QMessageBox(self)
+        dialog.setWindowTitle("Save Successful")
+        dialog.setText(f"Successfully saved:\n\n{self.output_file}\n\n{comments_file}")
+        dialog.setStandardButtons(QMessageBox.Ok)
+        dialog.setDefaultButton(QMessageBox.Ok)
+        
+        # Auto-close after 5 seconds (5000 ms)
+        timer = QTimer()
+        timer.timeout.connect(dialog.close)
+        timer.start(5000)
+        
+        dialog.exec_()
+    
+    def view_rankings(self):
+        """Open a window to view the rankings files"""
+        rankings_viewer = RankingsViewer(self, str(self.output_file), self.dark_mode)
+        if self.dark_mode:
+            rankings_viewer.setStyleSheet(self.styleSheet())
+        rankings_viewer.exec_()
     
     def toggle_secondary_dir(self):
         """Toggle between primary and secondary directory images"""
@@ -1405,6 +1427,8 @@ class AstrorankGUI(QMainWindow):
             self.toggle_dark_mode()
         elif self._key_matches_action(event, 'save'):
             self.save_rankings_now()
+        elif self._key_matches_action(event, 'view_rankings'):
+            self.view_rankings()
         elif self._key_matches_action(event, 'comment'):
             self.open_comment_dialog()
         elif self._key_matches_action(event, 'wise_toggle'):
@@ -1548,6 +1572,73 @@ class AstrorankGUI(QMainWindow):
             self.open_comment_dialog()
 
 
+class RankingsViewer(QDialog):
+    """Dialog to view rankings files with tabs to toggle between them"""
+    
+    def __init__(self, parent=None, output_file="rankings.txt", dark_mode=False):
+        super().__init__(parent)
+        self.output_file = output_file
+        self.dark_mode = dark_mode
+        self.comments_file = str(output_file).rsplit('.', 1)[0] + '_comments.txt'
+        
+        self.setWindowTitle("View Rankings")
+        self.setGeometry(200, 200, 700, 500)
+        
+        layout = QVBoxLayout()
+        
+        # Create tab buttons
+        button_layout = QHBoxLayout()
+        
+        self.rankings_button = QPushButton("Rankings")
+        self.rankings_button.clicked.connect(self.show_rankings)
+        self.rankings_button.setStyleSheet("background-color: #0078d4; color: white; padding: 5px;")
+        button_layout.addWidget(self.rankings_button)
+        
+        self.comments_button = QPushButton("Rankings with Comments")
+        self.comments_button.clicked.connect(self.show_comments)
+        button_layout.addWidget(self.comments_button)
+        
+        layout.addLayout(button_layout)
+        
+        # Create text display area
+        self.text_display = QPlainTextEdit()
+        self.text_display.setReadOnly(True)
+        self.text_display.setFont(QFont("Monospace", 10))
+        layout.addWidget(self.text_display)
+        
+        # Create close button
+        close_button = QPushButton("Close")
+        close_button.clicked.connect(self.close)
+        layout.addWidget(close_button)
+        
+        self.setLayout(layout)
+        
+        # Load rankings by default
+        self.show_rankings()
+    
+    def show_rankings(self):
+        """Display rankings file"""
+        try:
+            with open(self.output_file, 'r') as f:
+                content = f.read()
+            self.text_display.setPlainText(content)
+            self.rankings_button.setStyleSheet("background-color: #0078d4; color: white; padding: 5px;")
+            self.comments_button.setStyleSheet("")
+        except FileNotFoundError:
+            self.text_display.setPlainText(f"File not found: {self.output_file}")
+    
+    def show_comments(self):
+        """Display rankings with comments file"""
+        try:
+            with open(self.comments_file, 'r') as f:
+                content = f.read()
+            self.text_display.setPlainText(content)
+            self.comments_button.setStyleSheet("background-color: #0078d4; color: white; padding: 5px;")
+            self.rankings_button.setStyleSheet("")
+        except FileNotFoundError:
+            self.text_display.setPlainText(f"File not found: {self.comments_file}")
+
+
 class HelperDialog(QDialog):
     """Helper dialog showing keyboard shortcuts and features"""
     
@@ -1619,6 +1710,7 @@ class HelperDialog(QDialog):
 
 <b>Application:</b><br>
 • <b>S</b> - Save<br>
+• <b>V</b> - View rankings files (toggle between rankings and rankings with comments)<br>
 • <b>Q</b> - Save and quit astrorank<br>
 <br>
 
