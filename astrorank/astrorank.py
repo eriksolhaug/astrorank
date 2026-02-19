@@ -11,7 +11,8 @@ from pathlib import Path
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
     QLabel, QLineEdit, QPushButton, QScrollArea, QTableWidget, QTableWidgetItem,
-    QHeaderView, QMessageBox, QDialog, QTextEdit, QInputDialog, QProgressBar, QSlider
+    QHeaderView, QMessageBox, QDialog, QTextEdit, QInputDialog, QProgressBar, QSlider,
+    QSplitter
 )
 from PyQt5.QtGui import QPixmap, QColor, QFont, QIcon, QTransform, QImage
 from PyQt5.QtCore import Qt, QSize, QTimer, QThread, pyqtSignal, QBuffer
@@ -538,9 +539,24 @@ class AstrorankGUI(QMainWindow):
         self.list_widget = self.table
         self.table_container = table_container  # Store container for toggling visibility
         
-        # Add layouts to main layout
-        self.main_layout.addLayout(left_layout, 2)
-        self.main_layout.addWidget(table_container, 1)
+        # Create splitter for draggable resize between left panel and table
+        splitter = QSplitter(Qt.Horizontal)
+        
+        # Create left panel widget
+        left_panel = QWidget()
+        left_panel.setLayout(left_layout)
+        
+        # Add both panels to splitter
+        splitter.addWidget(left_panel)
+        splitter.addWidget(table_container)
+        
+        # Set initial sizes (2:1 ratio, can be dragged to change)
+        splitter.setSizes([self.width() * 2 // 3, self.width() // 3])
+        splitter.setCollapsible(0, False)  # Don't allow left panel to collapse
+        splitter.setCollapsible(1, False)  # Don't allow table to collapse
+        
+        # Add splitter to main layout
+        self.main_layout.addWidget(splitter)
         
         main_container.addLayout(self.main_layout)
         main_widget.setLayout(main_container)
