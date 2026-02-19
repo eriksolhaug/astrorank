@@ -165,16 +165,6 @@ astrorank YOUR_IMAGE_DIRECTORY -o my_rankings.txt # Resumes the session for my_r
 
 ---
 
-## Some Notes about the Interface
-
-- **Image Viewer**: Display of current active image with filename and previous ranking (if any) shown above in parentheses
-- **Zoom Controls**: Click the + and − buttons to adjust image size and expand container; "Fit" button to reset zoom to default; "Reset" button to return container to original size
-- **Rank Input**: Text field for entering ranks (0-3)
-- **Navigation Buttons**: Previous, Next, Skip to Next Unranked, and Hide/Show List - can use these instead of keys
-- **Image List Panel**: Shows all images with filenames, ranks, ranking status, and WISE download status (toggle visibility with `L` key)
-
----
-
 ## Output Format
 
 The output `.txt` file has the following format:
@@ -198,9 +188,30 @@ AstroRank uses a `config.json` file to customize keyboard shortcuts, ranking sca
 
 ### Survey and Browser Configuration
 
-The configuration supports three sections for URL-based features:
+The configuration supports three sections for URL-based features.
 
-**Browser Section** - for opening survey browser viewers (press `w`):
+**Note:** For the Browser, NED Search, and Secondary Downloads features to work, your image filenames must contain coordinates in one of these formats:
+
+**Format 1: Decimal Degrees (recommended)**
+```
+<any_name><ra>_<dec>.jpg
+```
+Where `<ra>` and `<dec>` are in decimal degrees (0-360° for RA, -90° to +90° for Dec).
+**Example:** `qso_aug_aug21_2025A_run1_100.00371_-69.056759.jpg`
+
+**Format 2: Sexagesimal (HHMMSS.SS±DDMMSS.SS)**
+```
+<any_name>HHMMSS.SS±DDMMSS.SS.jpg
+```
+Where coordinates are in sexagesimal format:
+- RA: `HHMMSS.SS` (hours, minutes, seconds)
+- Dec: `±DDMMSS.SS` (degrees, arcminutes, arcseconds, with +/- sign)
+
+**Example:** `COOLJ085925.43+074849.05.jpg` or `decals0335004.82-1928007.68.jpg`
+
+AstroRank automatically detects which format your filenames use. The three functionalities you can then use are:
+
+**Browser Section** - for opening survey viewers (press `w`):
 ```json
 "browser": {
    "enabled": true,
