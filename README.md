@@ -70,7 +70,7 @@ sudo apt-get install libxkbcommon-x11-0
 
 ---
 
-## How to Use AstroRank?
+## How to Use AstroRank
 
 ### Running AstroRank
 
