@@ -1016,14 +1016,17 @@ class AstrorankGUI(QMainWindow):
             
             # Highlight current row, unhighlight previous
             num_columns = 5 if self.secondary_enabled else 4
+            text_color = QColor(255, 255, 255) if self.dark_mode else QColor(0, 0, 0)
             if i == self.current_index:
                 highlight_color = QColor(70, 120, 180) if self.dark_mode else QColor(173, 216, 230)
                 for j in range(num_columns):
                     self.table.item(i, j).setBackground(highlight_color)
+                    self.table.item(i, j).setForeground(text_color)
             else:
                 bg_color = QColor(30, 30, 30) if self.dark_mode else QColor(255, 255, 255)
                 for j in range(num_columns):
                     self.table.item(i, j).setBackground(bg_color)
+                    self.table.item(i, j).setForeground(text_color)
         
         # Force table repaint
         self.table.viewport().update()
@@ -1135,16 +1138,19 @@ class AstrorankGUI(QMainWindow):
         # Update row colors for the new mode
         default_bg = QColor(30, 30, 30) if self.dark_mode else QColor(255, 255, 255)
         highlight_color = QColor(70, 120, 180) if self.dark_mode else QColor(173, 216, 230)
+        text_color = QColor(255, 255, 255) if self.dark_mode else QColor(0, 0, 0)
         
+        num_columns = 5 if self.secondary_enabled else 4
         for i in range(len(self.jpg_files)):
             if i == self.current_index:
                 bg_color = highlight_color
             else:
                 bg_color = default_bg
             
-            for j in range(4):
+            for j in range(num_columns):
                 if self.table.item(i, j) is not None:
                     self.table.item(i, j).setBackground(bg_color)
+                    self.table.item(i, j).setForeground(text_color)
     
     def save_rankings_now(self):
         """Save rankings and comments to disk (without quitting)"""
