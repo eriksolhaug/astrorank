@@ -1778,6 +1778,10 @@ Examples:
     try:
         app = QApplication(sys.argv)
         
+        # Set application name for macOS menu bar
+        app.setApplicationName("AstroRank")
+        app.setApplicationVersion("1.3")
+        
         # Set application icon for better macOS dock/menu bar integration
         icon = get_astrorank_icon()
         app.setWindowIcon(icon)
