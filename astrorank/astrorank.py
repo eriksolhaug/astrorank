@@ -21,7 +21,8 @@ from astrorank.utils import (
     get_jpg_files, load_rankings, save_rankings,
     find_next_unranked, find_first_unranked, is_valid_rank,
     parse_radec_from_filename, load_config, download_secondary_image,
-    parse_key_string, string_to_qt_key, parse_rank_config, get_rank_range
+    parse_key_string, string_to_qt_key, parse_rank_config, get_rank_range,
+    find_file_in_secondary_dir
 )
 from astrorank.ui_utils import get_astrorank_icon
 
@@ -703,7 +704,13 @@ class AstrorankGUI(QMainWindow):
         
         # Determine which directory to use
         if self.secondary_dir_enabled and self.use_secondary_dir and self.secondary_dir_path:
-            image_path = self.secondary_dir_path / current_file
+            # Try to find a matching file in secondary directory that contains the primary filename
+            matching_file = find_file_in_secondary_dir(current_file, self.secondary_dir_path)
+            if matching_file and matching_file.exists():
+                image_path = matching_file
+            else:
+                # Fallback to original directory if no match found
+                image_path = self.image_dir / current_file
         else:
             image_path = self.image_dir / current_file
         
@@ -917,7 +924,13 @@ class AstrorankGUI(QMainWindow):
         
         # Determine which directory to use for primary display
         if self.secondary_dir_enabled and self.use_secondary_dir and self.secondary_dir_path:
-            primary_image_path = self.secondary_dir_path / current_file
+            # Try to find a matching file in secondary directory that contains the primary filename
+            matching_file = find_file_in_secondary_dir(current_file, self.secondary_dir_path)
+            if matching_file and matching_file.exists():
+                primary_image_path = matching_file
+            else:
+                # Fallback to original directory if no match found
+                primary_image_path = self.image_dir / current_file
         else:
             primary_image_path = self.image_dir / current_file
         

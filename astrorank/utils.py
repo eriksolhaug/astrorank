@@ -28,6 +28,40 @@ def get_jpg_files(directory: str) -> List[str]:
     return jpg_files
 
 
+def find_file_in_secondary_dir(primary_filename: str, secondary_dir: Path) -> Optional[Path]:
+    """
+    Find a file in the secondary directory that contains the primary filename.
+    
+    This allows files to have different prefixes while still being matched.
+    For example, if primary_filename is 'image.jpg' and secondary directory
+    contains 'PREFIX_image.jpg', it will find and return that file.
+    
+    Args:
+        primary_filename: The filename from the primary directory
+        secondary_dir: Path to the secondary directory
+        
+    Returns:
+        Path to the matching file in secondary directory, or None if not found
+    """
+    if not secondary_dir.exists():
+        return None
+    
+    # Get the base filename without extension
+    primary_path = Path(primary_filename)
+    primary_stem = primary_path.stem
+    primary_ext = primary_path.suffix
+    
+    # Search for files in secondary directory that contain the primary filename
+    try:
+        for file in secondary_dir.glob(f"*{primary_stem}*{primary_ext}"):
+            if file.is_file():
+                return file
+    except Exception as e:
+        print(f"Error searching secondary directory: {e}")
+    
+    return None
+
+
 def load_rankings(output_file: str) -> Dict[str, int]:
     """
     Load rankings from a previous session.
