@@ -384,7 +384,7 @@ pip install -e .
 
 ## Acknowledgments
 
-`astrorank` was inspired by Aidan Cloonan's `lensranker` tool (an earlier version may have existed) developed for the COOL-LAMPS collaboration.
+`astrorank` was inspired by a ranking code developed by the COOL-LAMPS collaboration (PI: Mike Gladders), led by then-undergraduate students Kaiya Merz and Ezra Sukay.
 
 ---
 
